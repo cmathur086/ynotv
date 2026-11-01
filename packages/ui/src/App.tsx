@@ -141,12 +141,11 @@ import { useLayoutPersistence, type LayoutMode } from './hooks/useLayoutPersiste
 import { useMpvListeners } from './hooks/useMpvListeners';
 import { AdvancedSearchModal, type AdvancedSearchConfig } from './components/AdvancedSearchModal';
 import { ChannelProbeModal } from './components/ChannelProbeModal';
-import { StremioPage } from './components/stremio/StremioPage';import { NuvioPage } from './components/nuvio/NuvioPage';
+import { StremioPage } from './components/stremio/StremioPage';
 import { JellyfinPage } from './components/JellyfinPage';
 import { useStremioAddonStore } from './stores/stremioAddonStore';
 import { useStremioWatchStore } from './stores/stremioWatchStore';
 import { useStremioAuthStore } from './stores/stremioAuthStore';
-import { useNuvioAuthStore } from './stores/nuvioAuthStore';
 import { useUIStore } from './stores/uiStore';
 import { fetchSubtitles } from './services/stremio-addon';
 import { downloadAddonSubtitle } from './services/stremio-subs';
@@ -183,7 +182,7 @@ initUiDesign();
 
 // NEW: Extracted hooks
 import { useSettingsStore } from './stores/settingsStore';
-import { usePlayback, pushNuvioPlaybackProgress } from './hooks/usePlayback';
+import { usePlayback } from './hooks/usePlayback';
 import { useNavigation } from './hooks/useNavigation';
 import { useWatchlist } from './hooks/useWatchlist';
 import { useWindowManager } from './hooks/useWindowManager';
@@ -399,8 +398,6 @@ function App() {
   const reopenLastOnStartup = useSettingsStore((s) => s.reopenLastOnStartup);
   const stremioBadgeSize = useSettingsStore((s) => s.stremioBadgeSize);
   const setStremioBadgeSize = useSettingsStore((s) => s.setStremioBadgeSize);
-  const nuvioBadgeSize = useSettingsStore((s) => s.nuvioBadgeSize);
-  const setNuvioBadgeSize = useSettingsStore((s) => s.setNuvioBadgeSize);
   const savedLayoutState = useSettingsStore((s) => s.savedLayoutState);
   const layoutSettingsLoaded = useSettingsStore((s) => s.layoutSettingsLoaded);
   const timeshiftEnabled = useSettingsStore((s) => s.timeshiftEnabled);
@@ -593,113 +590,6 @@ function App() {
     }
   }, []);
 
-  // Nuvio independent badges configuration
-  const [showNuvioStreamBadges, setShowNuvioStreamBadges] = useState(true);
-  const handleShowNuvioStreamBadgesChange = useCallback(async (enabled: boolean) => {
-    setShowNuvioStreamBadges(enabled);
-    if (window.storage) {
-      await window.storage.updateSettings({ showNuvioStreamBadges: enabled });
-    }
-  }, []);
-
-  const [nuvioBadgeSources, setNuvioBadgeSources] = useState<BadgeSource[]>(DEFAULT_BADGE_SOURCES);
-  const handleNuvioBadgeSourcesChange = useCallback(async (sources: BadgeSource[]) => {
-    setNuvioBadgeSources(sources);
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioBadgeSources: sources });
-    }
-  }, []);
-
-  const compiledNuvioBadgeRules = useMemo(() => compileBadgeSources(nuvioBadgeSources), [nuvioBadgeSources]);
-
-  const [nuvioShowFileSizeBadges, setNuvioShowFileSizeBadges] = useState(true);
-  const handleNuvioShowFileSizeBadgesChange = useCallback(async (enabled: boolean) => {
-    setNuvioShowFileSizeBadges(enabled);
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioShowFileSizeBadges: enabled });
-    }
-  }, []);
-
-  const [nuvioStreamBadgePlacement, setNuvioStreamBadgePlacement] = useState<'top' | 'bottom'>('bottom');
-  const handleNuvioStreamBadgePlacementChange = useCallback(async (placement: 'top' | 'bottom') => {
-    setNuvioStreamBadgePlacement(placement);
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioStreamBadgePlacement: placement });
-    }
-  }, []);
-
-  const [showNuvioHoverDetails, setShowNuvioHoverDetails] = useState(true);
-  const handleShowNuvioHoverDetailsChange = useCallback(async (enabled: boolean) => {
-    setShowNuvioHoverDetails(enabled);
-    if (window.storage) {
-      await window.storage.updateSettings({ showNuvioHoverDetails: enabled });
-    }
-  }, []);
-
-  const [nuvioAutoPlayMode, setNuvioAutoPlayMode] = useState<StreamAutoPlayMode>('manual');
-  const handleNuvioAutoPlayModeChange = useCallback(async (mode: StreamAutoPlayMode) => {
-    setNuvioAutoPlayMode(mode);
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioAutoPlayMode: mode });
-    }
-  }, []);
-
-  const [nuvioAutoPlayTimeout, setNuvioAutoPlayTimeout] = useState(0);
-  const handleNuvioAutoPlayTimeoutChange = useCallback(async (timeout: number) => {
-    setNuvioAutoPlayTimeout(timeout);
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioAutoPlayTimeout: timeout });
-    }
-  }, []);
-
-  const [nuvioAutoPlaySourceScope, setNuvioAutoPlaySourceScope] = useState<StreamAutoPlaySourceScope>('all');
-  const handleNuvioAutoPlaySourceScopeChange = useCallback(async (scope: StreamAutoPlaySourceScope) => {
-    setNuvioAutoPlaySourceScope(scope);
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioAutoPlaySourceScope: scope });
-    }
-  }, []);
-
-  const [nuvioAutoPlayAllowedAddons, setNuvioAutoPlayAllowedAddons] = useState<string[]>([]);
-  const handleNuvioAutoPlayAllowedAddonsChange = useCallback(async (addonIds: string[]) => {
-    setNuvioAutoPlayAllowedAddons(addonIds);
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioAutoPlayAllowedAddons: addonIds });
-    }
-  }, []);
-
-  const [nuvioAutoPlayAllowedPlugins, setNuvioAutoPlayAllowedPlugins] = useState<string[]>([]);
-  const handleNuvioAutoPlayAllowedPluginsChange = useCallback(async (pluginIds: string[]) => {
-    setNuvioAutoPlayAllowedPlugins(pluginIds);
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioAutoPlayAllowedPlugins: pluginIds });
-    }
-  }, []);
-
-  const [nuvioAutoPlayRegex, setNuvioAutoPlayRegex] = useState<string>('');
-  const handleNuvioAutoPlayRegexChange = useCallback(async (regex: string) => {
-    setNuvioAutoPlayRegex(regex);
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioAutoPlayRegex: regex });
-    }
-  }, []);
-
-  const [nuvioCacheFetchResults, setNuvioCacheFetchResults] = useState<boolean>(false);
-  const handleNuvioCacheFetchResultsChange = useCallback(async (enabled: boolean) => {
-    setNuvioCacheFetchResults(enabled);
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioCacheFetchResults: enabled });
-    }
-  }, []);
-
-  const [nuvioCacheFetchTimeout, setNuvioCacheFetchTimeout] = useState<number>(5);
-  const handleNuvioCacheFetchTimeoutChange = useCallback(async (timeout: number) => {
-    setNuvioCacheFetchTimeout(timeout);
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioCacheFetchTimeout: timeout });
-    }
-  }, []);
-
   const [stremioCacheFetchResults, setStremioCacheFetchResults] = useState<boolean>(false);
   const handleStremioCacheFetchResultsChange = useCallback(async (enabled: boolean) => {
     setStremioCacheFetchResults(enabled);
@@ -783,45 +673,6 @@ function App() {
         }
         if (res.data?.streamBadgePlacement) {
           setStreamBadgePlacement(res.data.streamBadgePlacement as 'top' | 'bottom');
-        }
-        if (res.data?.showNuvioStreamBadges !== undefined) {
-          setShowNuvioStreamBadges(res.data.showNuvioStreamBadges as boolean);
-        }
-        if (res.data?.nuvioBadgeSources !== undefined) {
-          setNuvioBadgeSources(mergeDefaultBadgeSources(res.data.nuvioBadgeSources as BadgeSource[] | undefined));
-        }
-        if (res.data?.nuvioShowFileSizeBadges !== undefined) {
-          setNuvioShowFileSizeBadges(res.data.nuvioShowFileSizeBadges as boolean);
-        }
-        if (res.data?.nuvioStreamBadgePlacement) {
-          setNuvioStreamBadgePlacement(res.data.nuvioStreamBadgePlacement as 'top' | 'bottom');
-        }
-        if (res.data?.showNuvioHoverDetails !== undefined) {
-          setShowNuvioHoverDetails(res.data.showNuvioHoverDetails as boolean);
-        }
-        if (res.data?.nuvioAutoPlayMode) {
-          setNuvioAutoPlayMode(res.data.nuvioAutoPlayMode as StreamAutoPlayMode);
-        }
-        if (res.data?.nuvioAutoPlayTimeout !== undefined) {
-          setNuvioAutoPlayTimeout(res.data.nuvioAutoPlayTimeout as number);
-        }
-        if (res.data?.nuvioAutoPlaySourceScope) {
-          setNuvioAutoPlaySourceScope(res.data.nuvioAutoPlaySourceScope as StreamAutoPlaySourceScope);
-        }
-        if (res.data?.nuvioAutoPlayAllowedAddons !== undefined) {
-          setNuvioAutoPlayAllowedAddons(res.data.nuvioAutoPlayAllowedAddons as string[]);
-        }
-        if (res.data?.nuvioAutoPlayAllowedPlugins !== undefined) {
-          setNuvioAutoPlayAllowedPlugins(res.data.nuvioAutoPlayAllowedPlugins as string[]);
-        }
-        if (res.data?.nuvioAutoPlayRegex !== undefined) {
-          setNuvioAutoPlayRegex(res.data.nuvioAutoPlayRegex as string);
-        }
-        if (res.data?.nuvioCacheFetchResults !== undefined) {
-          setNuvioCacheFetchResults(res.data.nuvioCacheFetchResults as boolean);
-        }
-        if (res.data?.nuvioCacheFetchTimeout !== undefined) {
-          setNuvioCacheFetchTimeout(res.data.nuvioCacheFetchTimeout as number);
         }
         if (res.data?.stremioCacheFetchResults !== undefined) {
           setStremioCacheFetchResults(res.data.stremioCacheFetchResults as boolean);
@@ -1186,13 +1037,13 @@ function App() {
   }, []);
 
   // Playback source view state to know where to go back when stopped
-  const [playbackSourceView, setPlaybackSourceView] = useState<'movies' | 'series' | 'dvr' | 'stremio' | 'nuvio' | 'jellyfin' | null>(null);
+  const [playbackSourceView, setPlaybackSourceView] = useState<'movies' | 'series' | 'dvr' | 'stremio' | 'jellyfin' | null>(null);
   const [showPlaybackDetailsModal, setShowPlaybackDetailsModal] = useState(false);
   // Overlay listing the Jellyfin play queue currently driving playback (the
   // playlist the page started playing from).
   const [jellyfinQueueOpen, setJellyfinQueueOpen] = useState(false);
   const [sourcePickerParams, setSourcePickerParams] = useState<{
-    source: 'stremio' | 'nuvio';
+    source: 'stremio';
     type: string;
     id: string;
     meta: StremioMeta;
@@ -1854,37 +1705,11 @@ function useTmdbPresencePoster(
   }, [handleMouseMove, pipMode, showPipControls, popoutIsOpen]);
 
   const { showConfirm, ModalComponent, isOpen: isConfirmModalOpen } = useModal();
-  const nuvioHasUnsavedHomeLayout = useUIStore((s) => s.nuvioHasUnsavedHomeLayout);
-  const nuvioTabSaveFn = useUIStore((s) => s.nuvioTabSaveFn);
 
   const setActiveView = useCallback((newView: any) => {
     const nextView = typeof newView === 'function' ? newView(activeView) : newView;
-    const isCurrentlyNuvioSettings = (activeView === 'nuvio' && useUIStore.getState().nuvioView === 'settings') || (showSettingsPopup && settingsTab === 'nuvio');
-
-    if (isCurrentlyNuvioSettings && nuvioHasUnsavedHomeLayout) {
-      showConfirm(
-        'Unsaved Changes',
-        "Changes aren't saved, would you like to save homepage layout?",
-        async () => {
-          try {
-            await nuvioTabSaveFn?.();
-            useUIStore.setState({ nuvioHasUnsavedHomeLayout: false });
-            rawSetActiveView(nextView);
-          } catch (err) {
-            // Error was already alerted inside child component
-          }
-        },
-        () => {
-          useUIStore.setState({ nuvioHasUnsavedHomeLayout: false });
-          rawSetActiveView(nextView);
-        },
-        'Save',
-        'Discard Changes'
-      );
-    } else {
-      rawSetActiveView(nextView);
-    }
-  }, [activeView, showSettingsPopup, settingsTab, nuvioHasUnsavedHomeLayout, nuvioTabSaveFn, rawSetActiveView, showConfirm]);
+    rawSetActiveView(nextView);
+  }, [activeView, rawSetActiveView]);
 
   const switchLayout = useCallback(async (newLayout: LayoutMode) => {
     await rawSwitchLayout(newLayout);
@@ -1895,31 +1720,8 @@ function useTmdbPresencePoster(
 
   const setShowSettingsPopup = useCallback((val: boolean | ((prev: boolean) => boolean)) => {
     const nextVal = typeof val === 'function' ? val(showSettingsPopup) : val;
-    const isCurrentlyNuvioSettings = showSettingsPopup && settingsTab === 'nuvio';
-    if (isCurrentlyNuvioSettings && !nextVal && nuvioHasUnsavedHomeLayout) {
-      showConfirm(
-        'Unsaved Changes',
-        "Changes aren't saved, would you like to save homepage layout?",
-        async () => {
-          try {
-            await nuvioTabSaveFn?.();
-            useUIStore.setState({ nuvioHasUnsavedHomeLayout: false });
-            rawSetShowSettingsPopup(nextVal);
-          } catch (err) {
-            // Error was already alerted inside child component
-          }
-        },
-        () => {
-          useUIStore.setState({ nuvioHasUnsavedHomeLayout: false });
-          rawSetShowSettingsPopup(nextVal);
-        },
-        'Save',
-        'Discard Changes'
-      );
-    } else {
-      rawSetShowSettingsPopup(nextVal);
-    }
-  }, [showSettingsPopup, settingsTab, nuvioHasUnsavedHomeLayout, nuvioTabSaveFn, rawSetShowSettingsPopup, showConfirm]);
+    rawSetShowSettingsPopup(nextVal);
+  }, [showSettingsPopup, rawSetShowSettingsPopup]);
 
   const [showShortcutsOverlay, setShowShortcutsOverlay] = useState(false);
   const [showConnectionInfo, setShowConnectionInfo] = useState(false);
@@ -1940,7 +1742,7 @@ function useTmdbPresencePoster(
   const jellyfinOpenDetailsTargetRef = useRef<string | null>(null);
 
   // Wrap handleStop to restore the source page if stopped from a media context.
-  const handleStop = useCallback(async (returnView?: 'movies' | 'series' | 'dvr' | 'stremio' | 'nuvio' | 'jellyfin') => {
+  const handleStop = useCallback(async (returnView?: 'movies' | 'series' | 'dvr' | 'stremio' | 'jellyfin') => {
     // Prop wired via onBack/onStop/onClick hands React the click event as the
     // first argument. Only a known view name may be a destination: a stray
     // event used to become the activeView (`active-view-[object MouseEvent]`),
@@ -1950,16 +1752,14 @@ function useTmdbPresencePoster(
       returnView === 'series' ||
       returnView === 'dvr' ||
       returnView === 'stremio' ||
-      returnView === 'nuvio' ||
       (returnView === 'jellyfin' && jellyfinEnabled)
         ? returnView
         : undefined;
     const isStremio = vodInfo?.source_id === 'stremio' || vodInfo?.source_id === 'trailer';
-    const isNuvio = vodInfo?.source_id === 'nuvio';
     const isJellyfin = vodInfo?.source_id === 'jellyfin';
-    
+
     // Save final progress before stopping
-    if (isStremio || isNuvio) {
+    if (isStremio) {
       const pos = positionRef.current;
       const dur = durationRef.current;
       if (dur > 0 && pos > 0) {
@@ -1967,61 +1767,46 @@ function useTmdbPresencePoster(
         const watchStore = useStremioWatchStore.getState();
         const epInfo = stremioEpisodeRef.current;
         const movieInfo = stremioMovieRef.current;
-        
+        const auth = useStremioAuthStore.getState();
+
         if (epInfo) {
-          if (!isNuvio) {
-            watchStore.updateEpisodeProgress(
+          watchStore.updateEpisodeProgress(
+            epInfo.metaId,
+            epInfo.videoId,
+            fraction,
+            epInfo.season,
+            epInfo.episode,
+            epInfo.nextVideoId,
+            epInfo.nextSeason,
+            epInfo.nextEpisode
+          );
+
+          // Sync to Stremio cloud
+          if (auth.authKey && auth.syncProgress) {
+            auth.syncPlaybackProgress(
               epInfo.metaId,
               epInfo.videoId,
-              fraction,
-              epInfo.season,
-              epInfo.episode,
-              epInfo.nextVideoId,
-              epInfo.nextSeason,
-              epInfo.nextEpisode
-            );
-          }
-
-          if (isStremio) {
-            // Sync to Stremio cloud
-            const auth = useStremioAuthStore.getState();
-            if (auth.authKey && auth.syncProgress) {
-              auth.syncPlaybackProgress(
-                epInfo.metaId,
-                epInfo.videoId,
-                pos,
-                dur,
-                'series',
-                epInfo.name,
-                epInfo.poster
-              ).catch(() => {});
-            }
-          } else if (isNuvio) {
-            // Sync final progress to Nuvio cloud (stop event)
-            void pushNuvioPlaybackProgress(vodInfo, pos, dur);
+              pos,
+              dur,
+              'series',
+              epInfo.name,
+              epInfo.poster
+            ).catch(() => {});
           }
         } else if (movieInfo) {
-          if (!isNuvio) {
-            watchStore.updateMovieProgress(movieInfo.metaId, fraction);
-          }
+          watchStore.updateMovieProgress(movieInfo.metaId, fraction);
 
-          if (isStremio) {
-            // Sync to Stremio cloud
-            const auth = useStremioAuthStore.getState();
-            if (auth.authKey && auth.syncProgress) {
-              auth.syncPlaybackProgress(
-                movieInfo.metaId,
-                movieInfo.metaId,
-                pos,
-                dur,
-                'movie',
-                movieInfo.name,
-                movieInfo.poster
-              ).catch(() => {});
-            }
-          } else if (isNuvio) {
-            // Sync final progress to Nuvio cloud (stop event)
-            void pushNuvioPlaybackProgress(vodInfo, pos, dur);
+          // Sync to Stremio cloud
+          if (auth.authKey && auth.syncProgress) {
+            auth.syncPlaybackProgress(
+              movieInfo.metaId,
+              movieInfo.metaId,
+              pos,
+              dur,
+              'movie',
+              movieInfo.name,
+              movieInfo.poster
+            ).catch(() => {});
           }
         }
       }
@@ -2057,8 +1842,6 @@ function useTmdbPresencePoster(
       setPlaybackSourceView(null);
     } else if (isStremio) {
       setActiveView('stremio');
-    } else if (isNuvio) {
-      setActiveView('nuvio');
     } else if (playbackSourceView === 'jellyfin') {
       // Jellyfin is disabled — drop the stale return marker so later stops
       // of other media don't see a lingering jellyfin destination.
@@ -2069,7 +1852,7 @@ function useTmdbPresencePoster(
   // Jellyfin handoff: play the captured direct-stream URL through the app's
   // normal VOD pipeline (same as any movie) so the frontend's own player takes
   // over. Switch to the transparent fullscreen player view (hiding every page
-  // background, exactly like Live TV / Stremio / Nuvio) and remember to return
+  // background, exactly like Live TV / Stremio) and remember to return
   // to the Jellyfin tab when playback stops.
   const handleJellyfinPlay = useCallback(
     async (payload: import('./components/JellyfinPage').JellyfinPlayPayload) => {
@@ -2537,7 +2320,6 @@ function useTmdbPresencePoster(
       activeView === 'movies' ||
       activeView === 'series' ||
       activeView === 'stremio' ||
-      activeView === 'nuvio' ||
       activeView === 'jellyfin'
     ) {
       return;
@@ -2778,18 +2560,6 @@ function useTmdbPresencePoster(
   }, [layoutSettingsLoaded, initializeStremioAddons, initializeStremioSync]);
 
   // ==========================================================================
-  // Initialize Nuvio sync
-  // ==========================================================================
-  const initializeNuvioSync = useNuvioAuthStore((s) => s.syncNow);
-
-  useEffect(() => {
-    if (layoutSettingsLoaded) {
-      // Defer cloud sync by 3 s so the initial render and DB queries complete first
-      setTimeout(() => initializeNuvioSync(), 3000);
-    }
-  }, [layoutSettingsLoaded, initializeNuvioSync]);
-
-  // ==========================================================================
   // Channel Info Overlay
   // ==========================================================================
   // The overlay follows the titlebar/nowplaying bar visibility (showControls).
@@ -2873,7 +2643,7 @@ function useTmdbPresencePoster(
   const [previewVideoRect, setPreviewVideoRect] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
-    if (activeView === 'guide' || activeView === 'movies' || activeView === 'series' || activeView === 'dvr' || activeView === 'sports' || activeView === 'stremio' || activeView === 'nuvio' || activeView === 'calendar') {
+    if (activeView === 'guide' || activeView === 'movies' || activeView === 'series' || activeView === 'dvr' || activeView === 'sports' || activeView === 'stremio' || activeView === 'calendar') {
       const schemes = ['scheme-apple', 'scheme-sunset', 'scheme-aurora', 'scheme-forest'];
       const chosen = schemes[Math.floor(Math.random() * schemes.length)];
       setRandomScheme(chosen);
@@ -3375,7 +3145,7 @@ function useTmdbPresencePoster(
   }, []);
 
   // Text typed in the phone remote's type-into-field modal routes to whichever
-  // search box the user activated from the remote (VOD / Stremio / Nuvio).
+  // search box the user activated from the remote (VOD / Stremio).
   useEffect(() => {
     const handleRemoteTextInput = (e: Event) => {
       const { fieldId, text, commit, cancel } = (e as CustomEvent).detail || {};
@@ -3441,7 +3211,7 @@ function useTmdbPresencePoster(
   const [showAudioModal, setShowAudioModal] = useState(false);
 
   // ==========================================================================
-  // Stremio/Nuvio add-on subtitle tracks (metadata only until selected)
+  // Stremio add-on subtitle tracks (metadata only until selected)
   // ==========================================================================
   const [addonSubtitleTracks, setAddonSubtitleTracks] = useState<AddonSubtitleTrack[]>([]);
   const [addonSubtitleQueue, setAddonSubtitleQueue] = useState<Record<string, AddonQueueState>>({});
@@ -3556,11 +3326,11 @@ function useTmdbPresencePoster(
     clearAddonSubtitleTracksRef.current = clearAddonSubtitleTracks;
   }, [clearAddonSubtitleTracks]);
 
-  // Clear add-on subtitle tracks whenever the active playback is a non-Stremio/non-Nuvio VOD.
+  // Clear add-on subtitle tracks whenever the active playback is a non-Stremio VOD.
   // This automatically cleans up across all non-Stremio VOD entry points: Jellyfin handoffs,
   // queue jumps, playlist auto-next, local library episodes, etc.
   useEffect(() => {
-    if (vodInfo && vodInfo.source_id !== 'stremio' && vodInfo.source_id !== 'nuvio') {
+    if (vodInfo && vodInfo.source_id !== 'stremio') {
       clearAddonSubtitleTracks();
     }
   }, [vodInfo?.source_id, clearAddonSubtitleTracks]);
@@ -3746,7 +3516,7 @@ function useTmdbPresencePoster(
   }, []);
 
   const handlePlayVodWrapper = useCallback((info: import('./types/media').VodPlayInfo, onCloseView?: () => void, targetMode?: 'embedded' | 'popout' | 'external') => {
-    if (info.source_id !== 'stremio' && info.source_id !== 'nuvio') {
+    if (info.source_id !== 'stremio') {
       clearAddonSubtitleTracks();
       stremioMetaRef.current = null;
       stremioEpisodeVideoRef.current = null;
@@ -3807,7 +3577,6 @@ function useTmdbPresencePoster(
   const stremioMovieRef = useRef<{ metaId: string; name: string; poster?: string } | null>(null);
   const stremioMetaRef = useRef<StremioMeta | null>(null);
   const stremioEpisodeVideoRef = useRef<any>(null);
-  const stremioIsNuvioRef = useRef(false);
   useEffect(() => {
     const handler = async (e: Event) => {
       try {
@@ -3824,12 +3593,10 @@ function useTmdbPresencePoster(
         durationRef.current = 0;
         positionRef.current = 0;
 
-        const isNuvio = !!detail.isNuvio;
         stremioMetaRef.current = meta;
         setActiveStremioMeta(meta);
         stremioEpisodeVideoRef.current = episodeVideo || null;
         setActiveStremioEpisode(episodeVideo || null);
-        stremioIsNuvioRef.current = isNuvio;
         const watchStore = useStremioWatchStore.getState();
 
         if (meta.type === 'series' && episodeVideo) {
@@ -3850,14 +3617,12 @@ function useTmdbPresencePoster(
               nextEpisode = nxt.episode;
             }
           }
-          if (!isNuvio) {
-            watchStore.recordEpisodeStart(
-              meta.id, meta.name, meta.poster,
-              episodeVideo.id, episodeVideo.season ?? 0, episodeVideo.episode ?? 0,
-              nextVideoId, nextSeason, nextEpisode,
-              stream
-            );
-          }
+          watchStore.recordEpisodeStart(
+            meta.id, meta.name, meta.poster,
+            episodeVideo.id, episodeVideo.season ?? 0, episodeVideo.episode ?? 0,
+            nextVideoId, nextSeason, nextEpisode,
+            stream
+          );
           stremioEpisodeRef.current = {
             metaId: meta.id,
             name: meta.name,
@@ -3871,13 +3636,11 @@ function useTmdbPresencePoster(
           };
           stremioMovieRef.current = null;
         } else {
-          if (!isNuvio) {
-            watchStore.recordMovieWatch(meta.id, meta.name, meta.poster, stream);
-          }
+          watchStore.recordMovieWatch(meta.id, meta.name, meta.poster, stream);
           stremioMovieRef.current = { metaId: meta.id, name: meta.name, poster: meta.poster };
           stremioEpisodeRef.current = null;
         }
-        setPlaybackSourceView(isNuvio ? 'nuvio' : 'stremio');
+        setPlaybackSourceView('stremio');
         setActiveViewRef.current('none');
         const isSeries = meta.type === 'series' && episodeVideo;
 
@@ -3885,14 +3648,14 @@ function useTmdbPresencePoster(
         void recordVodWatch(
           meta.id,
           isSeries ? 'series' : 'movie',
-          isNuvio ? 'nuvio' : 'stremio',
+          'stremio',
           meta.name,
           meta.poster,
           isSeries ? (episodeVideo.season ?? undefined) : undefined,
           isSeries ? (episodeVideo.episode ?? undefined) : undefined,
           isSeries ? (episodeVideo.title || `Episode ${episodeVideo.episode}`) : undefined
         ).catch((err) => {
-          console.error(isNuvio ? '[Nuvio] Failed to record VOD watch in history:' : '[Stremio] Failed to record VOD watch in history:', err);
+          console.error('[Stremio] Failed to record VOD watch in history:', err);
         });
 
         await handlePlayVodRef.current({
@@ -3906,7 +3669,7 @@ function useTmdbPresencePoster(
           episodeInfo: isSeries
             ? `S${episodeVideo.season} E${episodeVideo.episode}${episodeVideo.title ? ` · ${episodeVideo.title}` : ''}`
             : undefined,
-          source_id: isNuvio ? 'nuvio' : 'stremio',
+          source_id: 'stremio',
           mediaId: isSeries ? `${meta.id}_ep_${episodeVideo.id}` : meta.id,
           seriesId: isSeries ? meta.id : undefined,
           seasonNum: episodeVideo?.season,
@@ -3977,10 +3740,9 @@ function useTmdbPresencePoster(
   const handleSwitchStream = useCallback((stream: StremioStream) => {
     const meta = stremioMetaRef.current;
     const episodeVideo = stremioEpisodeVideoRef.current;
-    const isNuvio = stremioIsNuvioRef.current;
     if (!meta) return;
     window.dispatchEvent(new CustomEvent('ynotv:stremio-play', {
-      detail: { stream, meta, episodeVideo, isNuvio },
+      detail: { stream, meta, episodeVideo },
     }));
   }, []);
 
@@ -3992,7 +3754,7 @@ function useTmdbPresencePoster(
       const { url, title, backdropUrl, logoUrl, targetMode } = (e as CustomEvent).detail;
       if (!url) return;
       const currentView = activeViewRef.current;
-      if (currentView === 'movies' || currentView === 'series' || currentView === 'stremio' || currentView === 'dvr' || currentView === 'nuvio') {
+      if (currentView === 'movies' || currentView === 'series' || currentView === 'stremio' || currentView === 'dvr') {
         setPlaybackSourceView(currentView);
       }
       const effectiveMode = targetMode || vodPlayerModeRef.current;
@@ -4047,12 +3809,11 @@ function useTmdbPresencePoster(
 
 
   // ==========================================================================
-  // Stremio & Nuvio Progress Updater — saves watch progress every 10 seconds
+  // Stremio Progress Updater — saves watch progress every 10 seconds
   // ==========================================================================
   useEffect(() => {
     const isStremio = vodInfo?.source_id === 'stremio';
-    const isNuvio = vodInfo?.source_id === 'nuvio';
-    if ((!isStremio && !isNuvio) || !playing || duration <= 0) return;
+    if (!isStremio || !playing || duration <= 0) return;
 
     const saveProgress = () => {
       const pos = positionRef.current;
@@ -4065,22 +3826,20 @@ function useTmdbPresencePoster(
       const movieInfo = stremioMovieRef.current;
 
       if (epInfo) {
-        if (!isNuvio) {
-          watchStore.updateEpisodeProgress(
-            epInfo.metaId,
-            epInfo.videoId,
-            fraction,
-            epInfo.season,
-            epInfo.episode,
-            epInfo.nextVideoId,
-            epInfo.nextSeason,
-            epInfo.nextEpisode
-          );
-        }
+        watchStore.updateEpisodeProgress(
+          epInfo.metaId,
+          epInfo.videoId,
+          fraction,
+          epInfo.season,
+          epInfo.episode,
+          epInfo.nextVideoId,
+          epInfo.nextSeason,
+          epInfo.nextEpisode
+        );
         recordEpisodeWatch(
           epInfo.videoId,
           epInfo.metaId,
-          isNuvio ? 'nuvio' : 'stremio',
+          'stremio',
           epInfo.season,
           epInfo.episode,
           '',
@@ -4104,9 +3863,7 @@ function useTmdbPresencePoster(
           }
         }
       } else if (movieInfo) {
-        if (!isNuvio) {
-          watchStore.updateMovieProgress(movieInfo.metaId, fraction);
-        }
+        watchStore.updateMovieProgress(movieInfo.metaId, fraction);
 
         if (isStremio) {
           // Sync to Stremio Cloud
@@ -4175,15 +3932,6 @@ function useTmdbPresencePoster(
 
     // A user-initiated pause must never be treated as the episode ending.
     if (userPausedRef.current) return;
-
-    // Nuvio: push the final position on natural end so the cloud Continue
-    // Watching row reflects the completed item (NuvioDesktop flushes on player
-    // end too). endPos can read 0 on EOF (mpv resets position at unload), so
-    // fall back to the duration. No-op for non-Nuvio.
-    if (vodInfo?.source_id === 'nuvio') {
-      const finalPos = endPos > 1 ? endPos : (endDur > 0 ? endDur : 0);
-      void pushNuvioPlaybackProgress(vodInfo, finalPos, endDur);
-    }
 
     // Consume the signal so a re-render can't re-trigger auto-play.
     if (vodEndFileSignal) setVodEndFileSignal(null);
@@ -4723,32 +4471,6 @@ function useTmdbPresencePoster(
           }
         }
         // Fall through to channel nav if no prev episode found
-      } else if (vodInfo.source_id === 'nuvio') {
-        const meta = stremioMetaRef.current;
-        if (meta?.videos) {
-          const sorted = [...meta.videos].sort((a: any, b: any) => {
-            if ((a.season ?? 0) !== (b.season ?? 0)) return (a.season ?? 0) - (b.season ?? 0);
-            return (a.episode ?? 0) - (b.episode ?? 0);
-          });
-          const currentIdx = sorted.findIndex((v: any) => v.id === vodInfo.episodeId);
-          if (currentIdx > 0) {
-            const prevVideo = sorted[currentIdx - 1];
-            const store = useUIStore.getState();
-            store.setNuvioPreselectVideoId(prevVideo.id);
-            store.nuvioNavigate({
-              view: 'detail',
-              meta: {
-                id: meta.id,
-                type: 'series',
-                name: meta.name,
-                poster: meta.poster ?? null,
-                background: meta.background ?? meta.poster ?? null,
-              }
-            });
-            await handleStop();
-            return;
-          }
-        }
       } else if (vodInfo.source_id === 'local') {
         // Local series: episodes live in the local library (not the VOD DB), so
         // resolve adjacency from the in-memory library. Boundaries do not fall
@@ -4935,32 +4657,6 @@ function useTmdbPresencePoster(
           }
         }
         // Fall through to channel nav if no next episode found
-      } else if (vodInfo.source_id === 'nuvio') {
-        const meta = stremioMetaRef.current;
-        if (meta?.videos) {
-          const sorted = [...meta.videos].sort((a: any, b: any) => {
-            if ((a.season ?? 0) !== (b.season ?? 0)) return (a.season ?? 0) - (b.season ?? 0);
-            return (a.episode ?? 0) - (b.episode ?? 0);
-          });
-          const currentIdx = sorted.findIndex((v: any) => v.id === vodInfo.episodeId);
-          if (currentIdx >= 0 && currentIdx < sorted.length - 1) {
-            const nextVideo = sorted[currentIdx + 1];
-            const store = useUIStore.getState();
-            store.setNuvioPreselectVideoId(nextVideo.id);
-            store.nuvioNavigate({
-              view: 'detail',
-              meta: {
-                id: meta.id,
-                type: 'series',
-                name: meta.name,
-                poster: meta.poster ?? null,
-                background: meta.background ?? meta.poster ?? null,
-              }
-            });
-            await handleStop();
-            return;
-          }
-        }
       } else if (vodInfo.source_id === 'local') {
         // Local series: episodes live in the local library (not the VOD DB), so
         // resolve adjacency from the in-memory library. End of the last season
@@ -5394,12 +5090,6 @@ function useTmdbPresencePoster(
           setTimeout(() => focusViewOnOpen(), 120);
           break;
 
-        case 'nuvio':
-          setCats(false);
-          setView(curView === 'nuvio' ? 'none' : 'nuvio');
-          setTimeout(() => focusViewOnOpen(), 120);
-          break;
-
         case 'jellyfin':
           // The Jellyfin tab is opt-in; while disabled the shortcut should not
           // surface the hidden view. Reads the store directly because this
@@ -5436,8 +5126,7 @@ function useTmdbPresencePoster(
             curView === 'sports' ||
             curView === 'calendar' ||
             curView === 'dvr' ||
-            curView === 'stremio' ||
-            curView === 'nuvio'
+            curView === 'stremio'
           ) {
             setView('none');
             setCats(false);
@@ -5925,16 +5614,15 @@ function useTmdbPresencePoster(
   // ==========================================================================
   // Render
   // ==========================================================================
-  const isStremioOrNuvio = playbackSourceView === 'stremio' || playbackSourceView === 'nuvio';
-  const currentStremioMeta = isStremioOrNuvio ? (activeStremioMeta || stremioMetaRef.current) : null;
-  const currentStremioEpisode = isStremioOrNuvio ? (activeStremioEpisode || stremioEpisodeVideoRef.current) : null;
-  const isSeriesPlayback = isStremioOrNuvio ? currentStremioMeta?.type === 'series' : vodInfo?.type === 'series';
+  const isStremioView = playbackSourceView === 'stremio';
+  const currentStremioMeta = isStremioView ? (activeStremioMeta || stremioMetaRef.current) : null;
+  const currentStremioEpisode = isStremioView ? (activeStremioEpisode || stremioEpisodeVideoRef.current) : null;
+  const isSeriesPlayback = isStremioView ? currentStremioMeta?.type === 'series' : vodInfo?.type === 'series';
 
   const sourceNameMap = useSourceNameMap();
   const headerSourceName = useMemo(() => {
     if (!vodShowSourceBadge) return null;
-    if (isStremioOrNuvio) {
-      if (playbackSourceView === 'nuvio') return 'Nuvio';
+    if (isStremioView) {
       if (playbackSourceView === 'stremio') return 'Stremio';
       return null;
     }
@@ -5945,7 +5633,7 @@ function useTmdbPresencePoster(
     }
     if (vodInfo?.addonName) return vodInfo.addonName;
     return null;
-  }, [vodShowSourceBadge, isStremioOrNuvio, vodInfo, sourceNameMap, playbackSourceView]);
+  }, [vodShowSourceBadge, isStremioView, vodInfo, sourceNameMap, playbackSourceView]);
 
   return (
     <div className={`app${showControls ? '' : ' controls-hidden'}${pipMode ? ' pip-mode' : ''}${!pipMode && sportsOverlayWidget === 'autohide' ? ' has-live-sports-autohide' : ''}${!pipMode && sportsOverlayWidget === 'persistent' ? ' has-live-sports-persistent' : ''}${!pipMode && recentOverlayWidget !== null ? ' has-recent-widget' : ''}${!pipMode && favoritesOverlayWidget ? ' has-favorites-widget' : ''} active-view-${activeView}${guideTransparent ? ' guide-transparent' : ''}`} onMouseMove={handleMouseMovePip}>
@@ -5955,17 +5643,17 @@ function useTmdbPresencePoster(
         onBack={handleStop}
         title={
           isSeriesPlayback
-            ? (isStremioOrNuvio
+            ? (isStremioView
                 ? cleanEpisodeName(currentStremioEpisode?.title, currentStremioMeta?.name, currentStremioEpisode?.episode)
                 : cleanEpisodeName(vodInfo?.episodeInfo, vodInfo?.title, vodInfo?.episodeNum))
-            : (isStremioOrNuvio ? (currentStremioMeta?.name || i18n.t('player:nowPlaying')) : (vodInfo?.title || i18n.t('player:nowPlaying')))
+            : (isStremioView ? (currentStremioMeta?.name || i18n.t('player:nowPlaying')) : (vodInfo?.title || i18n.t('player:nowPlaying')))
         }
         subtitle={
           isSeriesPlayback
-            ? (isStremioOrNuvio
+            ? (isStremioView
                 ? `${currentStremioMeta?.name || 'Series'} · S${currentStremioEpisode?.season || 1} · E${currentStremioEpisode?.episode || 1}`
                 : `${vodInfo?.title || 'Series'} · S${vodInfo?.seasonNum || 1} · E${vodInfo?.episodeNum || 1}`)
-            : (isStremioOrNuvio
+            : (isStremioView
                 ? `${currentStremioMeta?.name || ''}${currentStremioMeta?.year ? ` · ${currentStremioMeta.year}` : ''}`
                 : `${vodInfo?.title || ''}${vodInfo?.year ? ` · ${vodInfo.year}` : ''}`)
         }
@@ -5998,11 +5686,10 @@ function useTmdbPresencePoster(
             await handleStop();
             return;
           }
-          // Stremio/Nuvio: stopping already restores the detail page in those
-          // apps (the app keeps its own view state), so nothing else to do.
+          // Stremio: stopping already restores the detail page (the app keeps
+          // its own view state), so nothing else to do.
           const isStremio = vodInfo?.source_id === 'stremio' || vodInfo?.source_id === 'trailer';
-          const isNuvio = vodInfo?.source_id === 'nuvio';
-          if (isStremio || isNuvio) {
+          if (isStremio) {
             await handleStop();
             return;
           }
@@ -6041,7 +5728,7 @@ function useTmdbPresencePoster(
           if (!meta) return;
           setShowPlaybackDetailsModal(false);
           setSourcePickerParams({
-            source: playbackSourceView === 'nuvio' ? 'nuvio' : 'stremio',
+            source: 'stremio',
             type: 'series',
             id: video.id,
             meta: meta,
@@ -6062,9 +5749,8 @@ function useTmdbPresencePoster(
           setShowPlaybackDetailsModal(false);
           handleStop();
           const isStremio = playbackSourceView === 'stremio';
-          const isNuvio = playbackSourceView === 'nuvio';
 
-          if (isStremio || isNuvio) {
+          if (isStremio) {
             const isSeries = (currentStremioMeta?.type || vodInfo?.type) === 'series';
             const newMeta: StremioMeta = {
               id: `tmdb:${item.id}`,
@@ -6075,14 +5761,9 @@ function useTmdbPresencePoster(
               imdbRating: item.rating > 0 ? String(item.rating.toFixed(1)) : undefined,
             };
             const store = useUIStore.getState();
-            if (isNuvio) {
-              store.nuvioNavigate({ view: 'detail', meta: newMeta as any } as any);
-              setActiveView('nuvio');
-            } else {
-              store.setStremioActiveMeta(newMeta);
-              store.setStremioView('detail');
-              setActiveView('stremio');
-            }
+            store.setStremioActiveMeta(newMeta);
+            store.setStremioView('detail');
+            setActiveView('stremio');
           } else {
             const isSeries = vodInfo?.type === 'series' || playbackSourceView === 'series';
             const store = useUIStore.getState();
@@ -6271,22 +5952,6 @@ function useTmdbPresencePoster(
                     <path d="M12 8v8" />
                   </svg>
                   <span>{i18n.t('nav:items.stremio')}</span>
-                </button>
-              )}
-
-              {!navHiddenTabs.includes('nuvio') && (
-                <button
-                  className={`segmented-btn ${activeView === 'nuvio' ? 'active' : ''}`}
-                  onClick={() => {
-                    setCategoriesOpen(false);
-                    setActiveView(activeView === 'nuvio' ? 'none' : 'nuvio');
-                  }}
-                  title={i18n.t('nav:items.nuvio')}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                  </svg>
-                  <span>{i18n.t('nav:items.nuvio')}</span>
                 </button>
               )}
 
@@ -6882,7 +6547,6 @@ function useTmdbPresencePoster(
           playbackSourceView === 'movies' ||
           playbackSourceView === 'series' ||
           playbackSourceView === 'stremio' ||
-          playbackSourceView === 'nuvio' ||
           vodInfo != null
             ? undefined
             : handleToggleTransparentGuide
@@ -6930,7 +6594,6 @@ function useTmdbPresencePoster(
         onPlayChannel={handlePlayChannelWrapper}
         onSwitchStream={handleSwitchStream}
         compiledBadgeRules={compiledBadgeRules}
-        compiledNuvioBadgeRules={compiledNuvioBadgeRules}
         pipMode={pipMode}
         onTogglePip={togglePip}
       />
@@ -7068,7 +6731,7 @@ function useTmdbPresencePoster(
           vodSourceId={vodInfo?.source_id}
           vodMediaId={vodInfo?.mediaId}
           jellyfinSubtitleTracks={vodInfo?.jellyfinSubtitleTracks}
-          addonSubtitleTracks={(vodInfo?.source_id === 'stremio' || vodInfo?.source_id === 'nuvio') ? addonSubtitleTracks : undefined}
+          addonSubtitleTracks={vodInfo?.source_id === 'stremio' ? addonSubtitleTracks : undefined}
           addonSubtitleQueue={addonSubtitleQueue}
           addonSubtitleLoaded={addonSubtitleLoaded}
           addonSubtitleLoading={addonSubtitleLoading}
@@ -7377,7 +7040,6 @@ function useTmdbPresencePoster(
           playbackSourceView === 'movies' ||
           playbackSourceView === 'series' ||
           playbackSourceView === 'stremio' ||
-          playbackSourceView === 'nuvio' ||
           vodInfo != null
             ? undefined
             : handleToggleTransparentGuide
@@ -7439,20 +7101,6 @@ function useTmdbPresencePoster(
           onStremioCacheFetchResultsChange={handleStremioCacheFetchResultsChange}
           stremioCacheFetchTimeout={stremioCacheFetchTimeout}
           onStremioCacheFetchTimeoutChange={handleStremioCacheFetchTimeoutChange}
-          showNuvioStreamBadges={showNuvioStreamBadges}
-          onShowNuvioStreamBadgesChange={handleShowNuvioStreamBadgesChange}
-          nuvioBadgeSources={nuvioBadgeSources}
-          onNuvioBadgeSourcesChange={handleNuvioBadgeSourcesChange}
-          nuvioBadgeSize={nuvioBadgeSize}
-          onNuvioBadgeSizeChange={setNuvioBadgeSize}
-          nuvioShowFileSizeBadges={nuvioShowFileSizeBadges}
-          onNuvioShowFileSizeBadgesChange={handleNuvioShowFileSizeBadgesChange}
-          nuvioStreamBadgePlacement={nuvioStreamBadgePlacement}
-          onNuvioStreamBadgePlacementChange={handleNuvioStreamBadgePlacementChange}
-          nuvioCacheFetchResults={nuvioCacheFetchResults}
-          onNuvioCacheFetchResultsChange={handleNuvioCacheFetchResultsChange}
-          nuvioCacheFetchTimeout={nuvioCacheFetchTimeout}
-          onNuvioCacheFetchTimeoutChange={handleNuvioCacheFetchTimeoutChange}
           initialTab={settingsTab}
           pendingSubTabFromParent={pendingSettingsSubTab}
           onConsumePendingSubTab={() => setPendingSettingsSubTab(null)}
@@ -7664,45 +7312,6 @@ function useTmdbPresencePoster(
           onStremioCacheFetchResultsChange={handleStremioCacheFetchResultsChange}
           stremioCacheFetchTimeout={stremioCacheFetchTimeout}
           onStremioCacheFetchTimeoutChange={handleStremioCacheFetchTimeoutChange}
-        />
-      </TransitionView>
-
-      {/* Nuvio Page */}
-      <TransitionView visible={activeView === 'nuvio'}>
-        <NuvioPage
-          onClose={() => setActiveView('none')}
-          showNuvioStreamBadges={showNuvioStreamBadges}
-          onShowNuvioStreamBadgesChange={handleShowNuvioStreamBadgesChange}
-          nuvioBadgeSources={nuvioBadgeSources}
-          onNuvioBadgeSourcesChange={handleNuvioBadgeSourcesChange}
-          nuvioBadgeSize={nuvioBadgeSize}
-          onNuvioBadgeSizeChange={setNuvioBadgeSize}
-          nuvioShowFileSizeBadges={nuvioShowFileSizeBadges}
-          onNuvioShowFileSizeBadgesChange={handleNuvioShowFileSizeBadgesChange}
-          nuvioStreamBadgePlacement={nuvioStreamBadgePlacement}
-          onNuvioStreamBadgePlacementChange={handleNuvioStreamBadgePlacementChange}
-          showNuvioHoverDetails={showNuvioHoverDetails}
-          onShowNuvioHoverDetailsChange={handleShowNuvioHoverDetailsChange}
-          nuvioAutoPlayMode={nuvioAutoPlayMode}
-          onNuvioAutoPlayModeChange={handleNuvioAutoPlayModeChange}
-          nuvioAutoPlayTimeout={nuvioAutoPlayTimeout}
-          onNuvioAutoPlayTimeoutChange={handleNuvioAutoPlayTimeoutChange}
-          nuvioAutoPlaySourceScope={nuvioAutoPlaySourceScope}
-          onNuvioAutoPlaySourceScopeChange={handleNuvioAutoPlaySourceScopeChange}
-          nuvioAutoPlayAllowedAddons={nuvioAutoPlayAllowedAddons}
-          onNuvioAutoPlayAllowedAddonsChange={handleNuvioAutoPlayAllowedAddonsChange}
-          nuvioAutoPlayAllowedPlugins={nuvioAutoPlayAllowedPlugins}
-          onNuvioAutoPlayAllowedPluginsChange={handleNuvioAutoPlayAllowedPluginsChange}
-          nuvioAutoPlayRegex={nuvioAutoPlayRegex}
-          onNuvioAutoPlayRegexChange={handleNuvioAutoPlayRegexChange}
-          nuvioCacheFetchResults={nuvioCacheFetchResults}
-          onNuvioCacheFetchResultsChange={handleNuvioCacheFetchResultsChange}
-          nuvioCacheFetchTimeout={nuvioCacheFetchTimeout}
-          onNuvioCacheFetchTimeoutChange={handleNuvioCacheFetchTimeoutChange}
-          onNavigateToSettingsTab={(tab) => {
-            setSettingsTab(tab as any);
-            setShowSettingsPopup(true);
-          }}
         />
       </TransitionView>
 
@@ -7951,7 +7560,7 @@ function useTmdbPresencePoster(
           id={sourcePickerParams.id}
           currentAddonName={vodInfo?.addonName}
           currentUrl={vodInfo?.url}
-          compiledBadgeRules={sourcePickerParams.source === 'nuvio' ? compiledNuvioBadgeRules : compiledBadgeRules}
+          compiledBadgeRules={compiledBadgeRules}
           onSelect={(stream) => {
             const params = sourcePickerParams;
             setSourcePickerParams(null);
@@ -7961,7 +7570,6 @@ function useTmdbPresencePoster(
                   meta: params.meta,
                   episodeVideo: params.video,
                   stream: stream,
-                  isNuvio: params.source === 'nuvio',
                 },
               })
             );

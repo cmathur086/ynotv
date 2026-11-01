@@ -252,10 +252,6 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions): void
                 e.preventDefault();
                 setCategoriesOpen(false);
                 setActiveView((v) => (v === 'calendar' ? 'none' : 'calendar'));
-            } else if (matches('toggleNuvio', key, code)) {
-                e.preventDefault();
-                setCategoriesOpen(false);
-                setActiveView((v) => (v === 'nuvio' ? 'none' : 'nuvio'));
             } else if (matches('toggleStrem', key, code)) {
                 e.preventDefault();
                 setCategoriesOpen(false);

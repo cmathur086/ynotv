@@ -6,7 +6,6 @@ export type SettingsTabId =
   | 'metadata'
   | 'subtitles'
   | 'strem'
-  | 'nuvio'
   | 'jellyfin'
   | 'discord'
   | 'security'
@@ -41,7 +40,6 @@ const SETTINGS_TABS: SettingsTab[] = [
   { id: 'metadata', label: 'Metadata' },
   { id: 'subtitles', label: 'Subtitles & Audio' },
   { id: 'strem', label: 'Strem' },
-  { id: 'nuvio', label: 'Nuvio' },
   { id: 'jellyfin', label: 'Jellyfin (Beta)' },
   { id: 'discord', label: 'Discord Rich Presence' },
   { id: 'theme', label: 'Theme' },
@@ -70,7 +68,6 @@ export const SETTINGS_TAB_LABEL_KEYS = {
   metadata: 'tabs.metadata',
   subtitles: 'tabs.subtitles',
   strem: 'tabs.strem',
-  nuvio: 'tabs.nuvio',
   jellyfin: 'tabs.jellyfin',
   discord: 'tabs.discord',
   theme: 'tabs.theme',

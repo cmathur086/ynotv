@@ -27,7 +27,6 @@ const TAB_LABELS: Record<SettingsTabId, string> = {
   metadata: 'Metadata',
   subtitles: 'Subtitles & Audio',
   strem: 'Strem',
-  nuvio: 'Nuvio',
   jellyfin: 'Jellyfin',
   discord: 'Discord Rich Presence',
   theme: 'Theme',

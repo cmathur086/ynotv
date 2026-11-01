@@ -40,7 +40,6 @@ export const DEFAULT_SHORTCUTS: Record<ShortcutAction, string> = {
     toggleEpgView: 'e',
     replayLastStream: 'q',
     toggleTransparentGuide: 'z',
-    toggleNuvio: 'n',
     toggleStrem: 'x',
     toggleJellyfin: 'k',
     toggleShortcutsOverlay: '/',

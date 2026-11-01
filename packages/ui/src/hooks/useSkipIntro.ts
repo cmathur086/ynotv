@@ -6,6 +6,7 @@ import { Bridge } from '../services/tauri-bridge';
 import { readLocalLibrary, extractEpisodeNumber } from '../services/local-library/local-library';
 import { getTvShowDetails } from '../services/tmdb';
 import { useSettingsStore } from '../stores/settingsStore';
+import { getActiveTmdbToken } from '../services/mediacore';
 
 interface UseSkipIntroOptions {
   vodInfo: VodPlayInfo | null;
@@ -140,7 +141,7 @@ export async function resolveIntroDbParams(
       const numericTmdbId =
         typeof tmdbId === 'number' ? tmdbId : parseInt(String(tmdbId).replace(/[^0-9]/g, ''), 10);
       if (!isNaN(numericTmdbId) && numericTmdbId > 0) {
-        const apiKey = useSettingsStore.getState().tmdbApiKey;
+        const apiKey = getActiveTmdbToken();
         if (apiKey) {
           try {
             const showDetails = await getTvShowDetails(apiKey, numericTmdbId);

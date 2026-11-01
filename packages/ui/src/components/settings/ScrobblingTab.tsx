@@ -21,7 +21,7 @@ export function ScrobblingTab() {
   const [traktVerificationUrl, setTraktVerificationUrl] = useState('');
   const [traktExpiresIn, setTraktExpiresIn] = useState(0);
 
-  const [activeModalType, setActiveModalType] = useState<'strem' | 'nuvio' | null>(null);
+  const [catalogsModalOpen, setCatalogsModalOpen] = useState(false);
 
   const traktPollTimer = useRef<any>(null);
   const traktCountdownTimer = useRef<any>(null);
@@ -104,11 +104,7 @@ export function ScrobblingTab() {
   };
 
   const openCatalogModal = () => {
-    setActiveModalType('strem');
-  };
-
-  const openNuvioCatalogModal = () => {
-    setActiveModalType('nuvio');
+    setCatalogsModalOpen(true);
   };
 
   const authContainerStyle: CSSProperties = {
@@ -260,13 +256,6 @@ export function ScrobblingTab() {
               >
                 {i18n.t('settings:scrobbling.configureStremCatalogs')}
               </button>
-              <button
-                className="sync-btn"
-                onClick={openNuvioCatalogModal}
-                style={{ padding: '8px 20px', fontSize: '0.9rem' }}
-              >
-                {i18n.t('settings:scrobbling.configureNuvioCatalogs')}
-              </button>
             </div>
 
             <button
@@ -279,11 +268,8 @@ export function ScrobblingTab() {
           </div>
         )}
 
-        {activeModalType !== null && (
-          <TraktCatalogsModal
-            type={activeModalType}
-            onClose={() => setActiveModalType(null)}
-          />
+        {catalogsModalOpen && (
+          <TraktCatalogsModal onClose={() => setCatalogsModalOpen(false)} />
         )}
       </div>
 

@@ -17,8 +17,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLiveQuery } from './useSqliteLiveQuery';
 import { db, type StoredMovie, type StoredSeries } from '../db';
-import { useNuvioAuthStore } from '../stores/nuvioAuthStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { resolveTmdbToken, useMediaCoreStore } from '../services/mediacore';
 import {
   getTrendingMoviesWithCache,
   getTrendingTvShowsWithCache,
@@ -48,28 +48,21 @@ import {
 // ===========================================================================
 
 /**
- * Get TMDB access token from the settings store (hydrated at boot; the
- * setTmdbApiKey setter keeps it current — no IPC read or event listener).
- * Note: This is the "API Read Access Token" from TMDB, not the API key.
+ * Get the TMDB access token to use: the personal key from Settings -> Metadata
+ * -> TMDB when one is entered, otherwise the MediaCore account marker when
+ * signed in (requests then go through the account server; see
+ * services/mediacore.ts). Null when neither is available.
+ * Note: a personal key is the "API Read Access Token" from TMDB, not the API key.
  */
 export function useTmdbAccessToken(): string | null {
   const tmdbApiKey = useSettingsStore((s) => s.tmdbApiKey);
-  return tmdbApiKey || null;
+  const signedIn = useMediaCoreStore((s) => s.user !== null);
+  return resolveTmdbToken(tmdbApiKey, signedIn);
 }
 
 // Alias for backwards compatibility
 export const useTmdbApiKey = useTmdbAccessToken;
-
-/**
- * Get active TMDB access token: Nuvio-synced key takes priority,
- * falling back to local Settings -> Metadata -> TMDB key.
- */
-export function useActiveTmdbToken(): string | null {
-  const localToken = useTmdbAccessToken();
-  const nuvioAuth = useNuvioAuthStore();
-  const nuvioToken = nuvioAuth.settings?.features?.tmdb_settings?.apiKey;
-  return nuvioToken && nuvioToken.trim() !== '' ? nuvioToken : localToken;
-}
+export const useActiveTmdbToken = useTmdbAccessToken;
 
 /**
  * Get enabled movie genres from the settings store (hydrated at boot; the

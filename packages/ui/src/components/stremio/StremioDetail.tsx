@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { StremioMeta, StremioStream, StremioVideo, StremioStreamBadge } from '../../types/stremio';
 import { useStremioAddonStore } from '../../stores/stremioAddonStore';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { getActiveTmdbToken } from '../../services/mediacore';
 import {
   useStremioSelectedSeason,
   useSetStremioSelectedSeason,
@@ -151,7 +152,7 @@ export function StremioDetail({
       // Retrieve TMDB token, fallback to the settings store if not populated yet in React state
       let activeToken = tmdbToken;
       if (!activeToken) {
-        activeToken = useSettingsStore.getState().tmdbApiKey || null;
+        activeToken = getActiveTmdbToken();
       }
 
       const isTmdbId = meta.id.startsWith('tmdb:');

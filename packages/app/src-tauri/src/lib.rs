@@ -339,6 +339,7 @@ mod raw_hid_gamepad;
 mod web_server;
 mod jellyfin_web;
 mod icon_switcher;
+mod mediacore;
 
 #[tauri::command]
 fn get_connected_gamepads() -> Vec<gamepad::GamepadInfo> {
@@ -5513,6 +5514,7 @@ pub fn run() {
     builder
         // Manage platform-specific MPV state
         .manage(MpvCoreState::new())
+        .manage(mediacore::MediaCoreState::default())
         .manage(audio_capture::AudioCaptureState::new())
         .manage(std::sync::Arc::new(cast::CastManager::new()))
         .setup(|app| {
@@ -5953,6 +5955,10 @@ pub fn run() {
             test_proxy_connection,
             // OpenSubtitles Secure Credential commands
             save_opensubtitles_credentials,
+            // MediaCore account (metadata through the account's server)
+            mediacore::mediacore_login,
+            mediacore::mediacore_session,
+            mediacore::mediacore_logout,
             get_opensubtitles_credentials,
             delete_opensubtitles_credentials,
             // Discord Rich Presence commands

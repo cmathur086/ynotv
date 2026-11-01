@@ -12,8 +12,6 @@ import { db, recordVodWatch, updateVodWatchProgress, getVodWatchProgress, record
 import { useSettingsStore } from '../stores/settingsStore';
 import { useDownloadStore } from '../stores/downloadStore';
 import { useStremioWatchStore } from '../stores/stremioWatchStore';
-import { useNuvioAuthStore } from '../stores/nuvioAuthStore';
-import { fetchNuvioWatchProgress, pushNuvioWatchProgress, type NuvioWatchProgressSyncEntry } from '../services/nuvio-api';
 import type { useMpvListeners } from './useMpvListeners';
 import { logInfo, logWarn, logError } from '../utils/logger';
 import { toSubSourceLang, fromSubSourceLang, LANG_MAP } from '../services/subsource';
@@ -25,48 +23,6 @@ import {
   restorableSubtitleTrackId,
 } from '../utils/subtitleIntent';
 import i18n, { translateNativeError } from '../i18n';
-
-/**
- * Push Nuvio watch progress for the given item, building the entry from the
- * same fields the old per-tick sync used. Mirrors NuvioDesktop's cadence:
- * remote pushes happen only on discrete events (stop/pause/seek/natural end),
- * never on a timer. Local in-app progress saving is unaffected.
- */
-export async function pushNuvioPlaybackProgress(
-  info: VodPlayInfo | null,
-  positionSec: number,
-  durationSec: number
-): Promise<void> {
-  if (!info || info.source_id !== 'nuvio') return;
-  if (!(positionSec > 0) || !(durationSec > 0)) return;
-  const isSeries = info.type === 'series';
-  const contentId = isSeries ? (info.seriesId || info.mediaId) : info.mediaId;
-  if (!contentId) return;
-  const entry: NuvioWatchProgressSyncEntry = {
-    content_id: contentId,
-    content_type: isSeries ? 'series' : 'movie',
-    video_id: info.episodeId || info.mediaId || contentId,
-    season: isSeries ? (info.seasonNum ?? null) : null,
-    episode: isSeries ? (info.episodeNum ?? null) : null,
-    position: Math.floor(positionSec * 1000),
-    duration: Math.floor(durationSec * 1000),
-    last_watched: Date.now(),
-    progress_key:
-      isSeries && info.seasonNum != null && info.episodeNum != null
-        ? `${contentId}_s${info.seasonNum}e${info.episodeNum}`
-        : info.mediaId || contentId,
-  };
-  const nuvioAuth = useNuvioAuthStore.getState();
-  const token = nuvioAuth.token;
-  const profile = nuvioAuth.activeProfile;
-  if (!token || !profile) return;
-  try {
-    await pushNuvioWatchProgress(token, profile.profile_index, [entry]);
-    window.dispatchEvent(new CustomEvent('ynotv:nuvio-sync-required'));
-  } catch (e) {
-    logWarn('[NuvioProgress] Failed to sync progress:', e);
-  }
-}
 
 /**
  * Apply saved subtitle settings to MPV.
@@ -2814,31 +2770,6 @@ export function usePlayback(options: UsePlaybackOptions): PlaybackState {
           }
         }
 
-        // If still no progress found in DB and this is a Nuvio stream, check Nuvio Cloud for synced progress fallback
-        if (resumePosition === 0 && info.source_id === 'nuvio') {
-          console.log('[Playback] Checking Nuvio Cloud for synced progress fallback');
-          const nuvioAuth = useNuvioAuthStore.getState();
-          const nuvioToken = nuvioAuth.token;
-          const nuvioProfile = nuvioAuth.activeProfile;
-          if (nuvioToken && nuvioProfile) {
-            try {
-              const items = await fetchNuvioWatchProgress(nuvioToken, nuvioProfile.profile_index, null, 100);
-              const progressKey = info.type === 'series' && info.seasonNum != null && info.episodeNum != null
-                ? `${info.seriesId}_s${info.seasonNum}e${info.episodeNum}`
-                : info.mediaId;
-              const match = items.find(item => item.progress_key === progressKey || (item.content_id === info.seriesId && item.video_id === info.episodeId));
-              if (match && match.duration > 0) {
-                const progressPercent = (match.position / match.duration) * 100;
-                if ((match.position >= 10000 || progressPercent > 1) && progressPercent < 95) {
-                  resumePosition = match.position / 1000; // convert to seconds
-                  logInfo('[Playback] Found Nuvio synced progress fallback:', resumePosition, 'seconds');
-                }
-              }
-            } catch (err) {
-              console.warn('[Playback] Failed to fetch Nuvio progress fallback:', err);
-            }
-          }
-        }
       }
       
       console.log('[Playback] Final resume position:', resumePosition);
@@ -3194,9 +3125,6 @@ export function usePlayback(options: UsePlaybackOptions): PlaybackState {
     } catch (e) {
       console.warn('[usePlayback] Seek command failed:', e);
     }
-    // Nuvio: push the new position right after a seek so the cloud resume
-    // point is current (matches NuvioDesktop's seek sync). No-op for non-Nuvio.
-    void pushNuvioPlaybackProgress(vodInfoRef.current, seconds, durationRef.current);
     setTimeout(() => { seekingRef.current = false; }, 200);
   }, [setPosition]);
 
@@ -3205,9 +3133,6 @@ export function usePlayback(options: UsePlaybackOptions): PlaybackState {
       userPausedRef.current = true;
       resetHealthTracking(0);
       await Bridge.pause();
-      // Nuvio: push the pause position so the cloud row reflects where the
-      // user stopped mid-item (NuvioDesktop flushes on pause too).
-      void pushNuvioPlaybackProgress(vodInfoRef.current, positionRef.current, durationRef.current);
     } else {
       userPausedRef.current = false;
       intentionallyStoppedRef.current = false;

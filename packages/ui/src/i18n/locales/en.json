@@ -1975,7 +1975,20 @@
       "hideKey": "Hide key",
       "showKey": "Show key",
       "languageLabel": "Metadata Language",
-      "languageHint": "Titles, descriptions and genres from TMDB will be returned in this language."
+      "languageHint": "Titles, descriptions and genres from TMDB will be returned in this language.",
+      "mediacore": {
+        "title": "MediaCore account",
+        "description": "Sign in with your MediaCore account to load posters, descriptions and catalogs without a TMDB key of your own.",
+        "identifierLabel": "Username or email",
+        "passwordLabel": "Password",
+        "signIn": "Sign in",
+        "signingIn": "Signing in…",
+        "signOut": "Sign out",
+        "signedInAs": "Signed in as {{name}}",
+        "usingAccount": "Metadata is coming from your MediaCore account.",
+        "personalKeyWins": "A personal TMDB key is set below, so it is used instead of your MediaCore account.",
+        "orPersonalKey": "Or use your own TMDB key"
+      }
     },
     "overlay": {
       "channelInfoOverlay": "Channel Information Overlay",

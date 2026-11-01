@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import type { SettingsTabId } from '../components/settings/SettingsSidebar';
 import { Bridge } from '../services/tauri-bridge';
 
-export type View = 'none' | 'guide' | 'movies' | 'series' | 'dvr' | 'sports' | 'calendar' | 'settings' | 'stremio' | 'nuvio' | 'jellyfin';
+export type View = 'none' | 'guide' | 'movies' | 'series' | 'dvr' | 'sports' | 'calendar' | 'settings' | 'stremio' | 'jellyfin';
 
 // Auto-hide controls after this many milliseconds of inactivity
 const CONTROLS_AUTO_HIDE_MS = 3000;

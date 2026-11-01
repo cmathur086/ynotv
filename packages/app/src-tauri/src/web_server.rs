@@ -2906,14 +2906,6 @@ async fn serve_remote_html() -> impl IntoResponse {
               </div>
               <div class="dest-text"><span class="dest-name">Stremio</span><span class="dest-sub">Addon Catalogs</span></div>
             </div>
-            <div class="dest-card" data-view="nuvio" onclick="selectDestination('nuvio', event)">
-              <div class="dest-icon-box" style="background: rgba(14, 165, 233, 0.12); color: #38bdf8;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
-                </svg>
-              </div>
-              <div class="dest-text"><span class="dest-name">Nuvio</span><span class="dest-sub">Cloud Streams</span></div>
-            </div>
             <div class="dest-card" data-view="dvr" onclick="selectDestination('dvr', event)">
               <div class="dest-icon-box" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -3135,20 +3127,7 @@ async fn serve_remote_html() -> impl IntoResponse {
           </div>
         </div>
 
-        <!-- 6. Nuvio -->
-        <div class="dest-card" data-view="nuvio" onclick="selectDestination('nuvio', event)">
-          <div class="dest-icon-box" style="background: rgba(14, 165, 233, 0.12); color: #38bdf8;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
-            </svg>
-          </div>
-          <div class="dest-text">
-            <span class="dest-name">Nuvio</span>
-            <span class="dest-sub">Cloud Streams</span>
-          </div>
-        </div>
-
-        <!-- 7. DVR -->
+        <!-- 6. DVR -->
         <div class="dest-card" data-view="dvr" onclick="selectDestination('dvr', event)">
           <div class="dest-icon-box" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -3481,7 +3460,6 @@ async fn serve_remote_html() -> impl IntoResponse {
       open_series: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>`,
       open_sports: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path></svg>`,
       toggle_stremio: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>`,
-      toggle_nuvio: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>`,
       open_settings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`,
     };
 
@@ -3501,7 +3479,6 @@ async fn serve_remote_html() -> impl IntoResponse {
       subtitles: 'Subtitles',
       toggle_livetv: 'Live TV',
       toggle_stremio: 'Stremio',
-      toggle_nuvio: 'Nuvio',
       toggle_overlay: 'EPG Overlay',
       toggle_transparent_overlay: 'Quick Guide',
       open_movies: 'Movies',
@@ -3779,7 +3756,7 @@ async fn serve_remote_html() -> impl IntoResponse {
     }
 
     // ── Type-into-field (search box activated from the remote) ──────────────
-    // When the user navigates to a VOD/Stremio/Nuvio search box and presses
+    // When the user navigates to a VOD/Stremio search box and presses
     // select from the phone remote, the app asks this page to show a query
     // box. Typing here streams the text back to the focused field.
     let remoteTypeFieldId = null;

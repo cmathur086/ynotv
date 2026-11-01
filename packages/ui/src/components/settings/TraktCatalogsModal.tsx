@@ -9,12 +9,10 @@ import '../Modal.css';
 import './PlaybackTab.css';
 
 interface TraktCatalogsModalProps {
-  type: 'strem' | 'nuvio';
   onClose: () => void;
 }
 
-export function TraktCatalogsModal({ type, onClose }: TraktCatalogsModalProps) {
-  const isNuvio = type === 'nuvio';
+export function TraktCatalogsModal({ onClose }: TraktCatalogsModalProps) {
   useTranslation();
   const bumpRefreshToken = useSetTraktCatalogRefreshToken();
 
@@ -22,12 +20,6 @@ export function TraktCatalogsModal({ type, onClose }: TraktCatalogsModalProps) {
   const [catalogOrder, setCatalogOrder] = useState<string[]>([]);
   const [catalogsBeforeAddon, setCatalogsBeforeAddon] = useState(false);
   const [traktEnabledLists, setTraktEnabledLists] = useState<{ id: string; name: string }[]>([]);
-
-  // Nuvio settings
-  const [nuvioCatalogSettings, setNuvioCatalogSettings] = useState<Record<string, boolean>>({});
-  const [nuvioCatalogOrder, setNuvioCatalogOrder] = useState<string[]>([]);
-  const [nuvioCatalogsBeforeAddon, setNuvioCatalogsBeforeAddon] = useState(false);
-  const [nuvioTraktEnabledLists, setNuvioTraktEnabledLists] = useState<{ id: string; name: string }[]>([]);
 
   const [traktLists, setTraktLists] = useState<{ id: { trakt: number; slug: string }; name: string }[]>([]);
   const [listsLoading, setListsLoading] = useState(false);
@@ -40,12 +32,6 @@ export function TraktCatalogsModal({ type, onClose }: TraktCatalogsModalProps) {
     setCatalogOrder(s.traktCatalogOrder || []);
     setCatalogsBeforeAddon(s.traktCatalogsBeforeAddon ?? false);
     setTraktEnabledLists(s.traktEnabledLists || []);
-
-    // Load Nuvio settings
-    setNuvioCatalogSettings(s.traktNuvioCatalogsEnabled || {});
-    setNuvioCatalogOrder(s.traktNuvioCatalogOrder || []);
-    setNuvioCatalogsBeforeAddon(s.traktNuvioCatalogsBeforeAddon ?? false);
-    setNuvioTraktEnabledLists(s.traktNuvioEnabledLists || []);
   };
 
   useEffect(() => {
@@ -57,73 +43,44 @@ export function TraktCatalogsModal({ type, onClose }: TraktCatalogsModalProps) {
   };
 
   const handleCatalogToggle = async (catType: string, enabled: boolean) => {
-    const currentSettings = isNuvio ? nuvioCatalogSettings : catalogSettings;
-    const currentOrder = isNuvio ? nuvioCatalogOrder : catalogOrder;
-
-    const nextSettings = { ...currentSettings, [catType]: enabled };
-    let nextOrder = currentOrder;
+    const nextSettings = { ...catalogSettings, [catType]: enabled };
+    let nextOrder = catalogOrder;
     if (enabled && !nextOrder.includes(catType)) {
       nextOrder = [...nextOrder, catType];
     }
 
-    if (isNuvio) {
-      setNuvioCatalogSettings(nextSettings);
-      setNuvioCatalogOrder(nextOrder);
-      await handleSettingUpdate({
-        traktNuvioCatalogsEnabled: nextSettings,
-        traktNuvioCatalogOrder: nextOrder,
-      });
-    } else {
-      setCatalogSettings(nextSettings);
-      setCatalogOrder(nextOrder);
-      await handleSettingUpdate({
-        traktCatalogsEnabled: nextSettings,
-        traktCatalogOrder: nextOrder,
-      });
-    }
+    setCatalogSettings(nextSettings);
+    setCatalogOrder(nextOrder);
+    await handleSettingUpdate({
+      traktCatalogsEnabled: nextSettings,
+      traktCatalogOrder: nextOrder,
+    });
     bumpRefreshToken(Date.now());
   };
 
   const handleListToggle = async (listId: string, listName: string, enabled: boolean) => {
     const key = `list-${listId}`;
-    const currentEnabledLists = isNuvio ? nuvioTraktEnabledLists : traktEnabledLists;
-    const currentOrder = isNuvio ? nuvioCatalogOrder : catalogOrder;
-
     const nextEnabledLists = enabled
-      ? [...currentEnabledLists, { id: listId, name: listName }]
-      : currentEnabledLists.filter(l => l.id !== listId);
+      ? [...traktEnabledLists, { id: listId, name: listName }]
+      : traktEnabledLists.filter(l => l.id !== listId);
 
-    let nextOrder = currentOrder;
+    let nextOrder = catalogOrder;
     if (enabled && !nextOrder.includes(key)) {
       nextOrder = [...nextOrder, key];
     }
 
-    if (isNuvio) {
-      setNuvioTraktEnabledLists(nextEnabledLists);
-      setNuvioCatalogOrder(nextOrder);
-      await handleSettingUpdate({
-        traktNuvioEnabledLists: nextEnabledLists,
-        traktNuvioCatalogOrder: nextOrder,
-      });
-    } else {
-      setTraktEnabledLists(nextEnabledLists);
-      setCatalogOrder(nextOrder);
-      await handleSettingUpdate({
-        traktEnabledLists: nextEnabledLists,
-        traktCatalogOrder: nextOrder,
-      });
-    }
+    setTraktEnabledLists(nextEnabledLists);
+    setCatalogOrder(nextOrder);
+    await handleSettingUpdate({
+      traktEnabledLists: nextEnabledLists,
+      traktCatalogOrder: nextOrder,
+    });
     bumpRefreshToken(Date.now());
   };
 
   const toggleCatalogsBeforeAddon = async (before: boolean) => {
-    if (isNuvio) {
-      setNuvioCatalogsBeforeAddon(before);
-      await handleSettingUpdate({ traktNuvioCatalogsBeforeAddon: before });
-    } else {
-      setCatalogsBeforeAddon(before);
-      await handleSettingUpdate({ traktCatalogsBeforeAddon: before });
-    }
+    setCatalogsBeforeAddon(before);
+    await handleSettingUpdate({ traktCatalogsBeforeAddon: before });
     bumpRefreshToken(Date.now());
   };
 
@@ -138,11 +95,6 @@ export function TraktCatalogsModal({ type, onClose }: TraktCatalogsModalProps) {
     setListsLoading(false);
   };
 
-  const currentSettings = isNuvio ? nuvioCatalogSettings : catalogSettings;
-  const currentOrder = isNuvio ? nuvioCatalogOrder : catalogOrder;
-  const currentEnabledLists = isNuvio ? nuvioTraktEnabledLists : traktEnabledLists;
-  const currentBeforeAddon = isNuvio ? nuvioCatalogsBeforeAddon : catalogsBeforeAddon;
-
   // Build ordered catalog list
   const allEntries: { key: string; label: string; description: string; isEnabled: boolean }[] = [];
 
@@ -151,7 +103,7 @@ export function TraktCatalogsModal({ type, onClose }: TraktCatalogsModalProps) {
       key: def.type,
       label: def.label,
       description: def.description,
-      isEnabled: currentSettings[def.type] === true,
+      isEnabled: catalogSettings[def.type] === true,
     });
   }
 
@@ -160,15 +112,15 @@ export function TraktCatalogsModal({ type, onClose }: TraktCatalogsModalProps) {
       key: `list-${list.id.slug}`,
       label: list.name,
       description: i18n.t('settings:traktCatalogs.yourCustomList'),
-      isEnabled: currentEnabledLists.some(l => l.id === list.id.slug),
+      isEnabled: traktEnabledLists.some(l => l.id === list.id.slug),
     });
   }
 
   const ordered: typeof allEntries = [];
   const disabled: typeof allEntries = [];
 
-  if (currentOrder.length > 0) {
-    for (const key of currentOrder) {
+  if (catalogOrder.length > 0) {
+    for (const key of catalogOrder) {
       const entry = allEntries.find(e => e.key === key);
       if (entry && entry.isEnabled) ordered.push(entry);
     }
@@ -222,15 +174,10 @@ export function TraktCatalogsModal({ type, onClose }: TraktCatalogsModalProps) {
     const [removed] = next.splice(from, 1);
     next.splice(to, 0, removed);
 
-    if (isNuvio) {
-      setNuvioCatalogOrder(next);
-      await handleSettingUpdate({ traktNuvioCatalogOrder: next });
-    } else {
-      setCatalogOrder(next);
-      await handleSettingUpdate({ traktCatalogOrder: next });
-    }
+    setCatalogOrder(next);
+    await handleSettingUpdate({ traktCatalogOrder: next });
     bumpRefreshToken(Date.now());
-  }, [ordered, getIndexFromClientY, bumpRefreshToken, isNuvio]);
+  }, [ordered, getIndexFromClientY, bumpRefreshToken]);
 
   const handleDragPointerCancel = useCallback(() => {
     dragFromIdx.current = null;
@@ -241,7 +188,7 @@ export function TraktCatalogsModal({ type, onClose }: TraktCatalogsModalProps) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '560px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <div className="modal-header">
-          <h3 className="modal-title">{isNuvio ? i18n.t('settings:traktCatalogs.nuvioTitle') : i18n.t('settings:traktCatalogs.stremTitle')}</h3>
+          <h3 className="modal-title">{i18n.t('settings:traktCatalogs.stremTitle')}</h3>
           <button className="modal-close-btn" onClick={onClose}>
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" />
@@ -250,9 +197,7 @@ export function TraktCatalogsModal({ type, onClose }: TraktCatalogsModalProps) {
         </div>
         <div className="modal-body strem-catalogs-modal-body" style={{ maxHeight: '60vh', overflowY: 'auto', paddingBottom: '8px' }}>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 16px 0', lineHeight: '1.5' }}>
-            {isNuvio
-              ? i18n.t('settings:traktCatalogs.nuvioSub')
-              : i18n.t('settings:traktCatalogs.stremSub')}
+            {i18n.t('settings:traktCatalogs.stremSub')}
           </p>
 
           {/* Position toggle */}
@@ -264,7 +209,7 @@ export function TraktCatalogsModal({ type, onClose }: TraktCatalogsModalProps) {
             <label className="toggle-switch">
               <input
                 type="checkbox"
-                checked={currentBeforeAddon}
+                checked={catalogsBeforeAddon}
                 onChange={(e) => toggleCatalogsBeforeAddon(e.target.checked)}
               />
               <span className="toggle-slider"></span>

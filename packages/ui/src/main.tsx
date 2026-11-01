@@ -26,6 +26,7 @@ import { useSportsSettingsStore } from './stores/sportsSettingsStore';
 // reduceEffectsWhileScrolling setting from the store at event time.
 import './utils/scrollTurbo';
 import { installTvRemote } from './services/tvRemote';
+import { installMediaCoreTmdbProxy } from './services/mediacore';
 
 // Must run before any component mounts: a localStorage write that exceeds the
 // WebView2 quota must never crash the (transparent) window.
@@ -33,6 +34,9 @@ installSafeStorage();
 
 // Android TV: route the remote's D-pad / OK / Back through spatial navigation.
 installTvRemote();
+
+// TMDB requests made on behalf of a MediaCore account go through its server.
+installMediaCoreTmdbProxy();
 
 // Kick off the single boot-time settings load (the store seeds synchronously
 // from localStorage for first paint; this reconciles the authoritative values

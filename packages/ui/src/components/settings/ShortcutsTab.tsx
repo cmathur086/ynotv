@@ -40,7 +40,6 @@ const ACTION_LABELS: Record<ShortcutAction, string> = {
     toggleEpgView: 'Toggle EPG View Layout',
     replayLastStream: 'Replay Last Stream',
     toggleTransparentGuide: 'Toggle Transparent Guide',
-    toggleNuvio: 'Toggle Nuvio',
     toggleStrem: 'Toggle Strem',
     toggleJellyfin: 'Toggle Jellyfin',
     toggleShortcutsOverlay: 'Toggle Shortcuts Overlay',
@@ -51,7 +50,7 @@ const ACTION_LABELS: Record<ShortcutAction, string> = {
 const GROUPS: Record<string, ShortcutAction[]> = {
     'Playback': ['togglePlay', 'seekForward', 'seekBackward', 'toggleMute', 'selectSubtitle', 'selectAudio', 'toggleFullscreen', 'toggleConnectionInfo', 'replayLastStream'],
     'Navigation': ['channelUp', 'channelDown'],
-    'Interface': ['toggleShortcutsOverlay', 'toggleLiveTV', 'toggleGuide', 'toggleTransparentGuide', 'toggleCategories', 'toggleDvr', 'toggleSports', 'toggleCalendar', 'toggleSettings', 'toggleStats', 'focusSearch', 'toggleEpgView', 'close', 'mouseBackNavigation', 'toggleNuvio', 'toggleStrem', 'toggleJellyfin'],
+    'Interface': ['toggleShortcutsOverlay', 'toggleLiveTV', 'toggleGuide', 'toggleTransparentGuide', 'toggleCategories', 'toggleDvr', 'toggleSports', 'toggleCalendar', 'toggleSettings', 'toggleStats', 'focusSearch', 'toggleEpgView', 'close', 'mouseBackNavigation', 'toggleStrem', 'toggleJellyfin'],
     'Layout': ['layoutMain', 'layoutPip', 'layoutBigBottom', 'layout2x2']
 };
 

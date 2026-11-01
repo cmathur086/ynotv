@@ -13,6 +13,7 @@ import {
 import type { Source, Channel, Category, Movie, Series } from '@ynotv/core';
 import { useUIStore } from '../stores/uiStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { getActiveTmdbToken } from '../services/mediacore';
 import { bulkOps, type BulkChannel, type BulkCategory } from '../services/bulk-ops';
 import { epgStreaming, getEpgUrlCandidates, type EpgProgressCallback, type EpgParseResult } from '../services/epg-streaming';
 import { pruneStaleGlobalEpgSourcesFromStoredSources } from '../services/globalEpgSourcePrune';
@@ -4407,7 +4408,7 @@ export async function syncAllVod(): Promise<Map<string, VodSyncResult>> {
 export async function enrichSourceMetadata(source?: Source, _force?: boolean) {
   startTmdbMatching();
   try {
-    const accessToken = useSettingsStore.getState().tmdbApiKey || null;
+    const accessToken = getActiveTmdbToken();
     const [movieCount, seriesCount] = await Promise.all([
       matchAllMoviesLazy(accessToken),
       matchAllSeriesLazy(accessToken),

@@ -199,7 +199,6 @@ export const PHONE_REMOTE_AVAILABLE_ACTIONS: PhoneRemoteActionMeta[] = [
   { id: 'open_series', label: 'Jump to TV Series', shortLabel: 'Series', category: 'destinations', icon: 'tv' },
   { id: 'open_sports', label: 'Jump to Sports', shortLabel: 'Sports', category: 'destinations', icon: 'activity' },
   { id: 'toggle_stremio', label: 'Jump to Stremio', shortLabel: 'Stremio', category: 'destinations', icon: 'play-circle' },
-  { id: 'toggle_nuvio', label: 'Jump to Nuvio', shortLabel: 'Nuvio', category: 'destinations', icon: 'cloud' },
   { id: 'open_settings', label: 'Jump to Settings', shortLabel: 'Settings', category: 'destinations', icon: 'settings' },
 ];
 

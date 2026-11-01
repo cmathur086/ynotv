@@ -7,7 +7,7 @@ import { extractStreamBadges, isLightColor, formatVideoSize } from '../utils/str
 import './SourcePickerModal.css';
 
 interface SourcePickerModalProps {
-  source: 'stremio' | 'nuvio';
+  source: 'stremio';
   type: string;
   id: string;
   currentAddonName?: string;
@@ -56,14 +56,8 @@ export function SourcePickerModal({
     let active = true;
     const load = async () => {
       try {
-        let addons: InstalledAddon[] = [];
-        if (source === 'stremio') {
-          const { useStremioAddonStore } = await import('../stores/stremioAddonStore');
-          addons = useStremioAddonStore.getState().enabledAddons;
-        } else {
-          const { useNuvioAddonStore } = await import('../stores/nuvioAddonStore');
-          addons = useNuvioAddonStore.getState().enabledAddons;
-        }
+        const { useStremioAddonStore } = await import('../stores/stremioAddonStore');
+        const addons: InstalledAddon[] = useStremioAddonStore.getState().enabledAddons;
         addonsRef.current = addons;
 
         const collected: StremioStream[] = [];

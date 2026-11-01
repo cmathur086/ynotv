@@ -37,7 +37,6 @@ const AVAILABLE_ACTIONS: Array<{ id: string }> = [
   { id: 'search' },
   { id: 'subtitles' },
   { id: 'toggle_livetv' },
-  { id: 'toggle_nuvio' },
   { id: 'toggle_stremio' },
   { id: 'toggle_transparent_overlay' },
   { id: 'toggle_overlay' },

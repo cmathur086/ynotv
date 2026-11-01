@@ -1014,9 +1014,6 @@ export function executeAction(action: string) {
     case 'toggle_guide':
       window.dispatchEvent(new CustomEvent('ynotv:navigate-view', { detail: { view: 'livetv' } }));
       break;
-    case 'toggle_nuvio':
-      window.dispatchEvent(new CustomEvent('ynotv:navigate-view', { detail: { view: 'nuvio' } }));
-      break;
     case 'toggle_stremio':
       window.dispatchEvent(new CustomEvent('ynotv:navigate-view', { detail: { view: 'stremio' } }));
       break;

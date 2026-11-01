@@ -9,27 +9,12 @@ import { create } from 'zustand';
 import type { SportsTabId } from '@ynotv/core';
 import type { MediaItem } from '../types/media';
 import type { StremioMetaPreview, StremioMeta } from '../types/stremio';
-import type { NuvioCollectionFolder } from '../services/nuvio-api';
-
-export interface NuvioMeta {
-  id: string;
-  type: string;
-  name: string;
-  poster: string | null;
-  background?: string | null;
-  logo?: string | null;
-}
 
 export type StremioView = 'home' | 'library' | 'detail' | 'search' | 'calendar' | 'settings' | 'person';
 
 export type StremioHistoryFrame =
   | { view: 'home' | 'library' | 'search' | 'calendar' | 'settings' }
   | { view: 'detail'; meta: StremioMeta }
-  | { view: 'person'; personId: number };
-
-export type NuvioHistoryFrame =
-  | { view: 'home' | 'library' | 'search' | 'collections' | 'addons' | 'scrapers' | 'settings'; catalogKey?: string | null }
-  | { view: 'detail'; meta: NuvioMeta }
   | { view: 'person'; personId: number };
 
 interface UIState {
@@ -139,32 +124,9 @@ interface UIState {
   stremioSelectedCloudCatalogKey: string | null;
   setStremioSelectedCloudCatalogKey: (key: string | null) => void;
 
-  // Nuvio
-  nuvioView: 'home' | 'library' | 'search' | 'collections' | 'addons' | 'scrapers' | 'settings' | 'person';
-  setNuvioView: (view: 'home' | 'library' | 'search' | 'collections' | 'addons' | 'scrapers' | 'settings' | 'person') => void;
-  nuvioActiveMeta: NuvioMeta | null;
-  setNuvioActiveMeta: (meta: NuvioMeta | null) => void;
-  nuvioHistory: NuvioHistoryFrame[];
-  nuvioNavigate: (frame: NuvioHistoryFrame) => void;
-  nuvioGoBack: () => void;
-  nuvioSelectedFolder: NuvioCollectionFolder | null;
-  setNuvioSelectedFolder: (folder: NuvioCollectionFolder | null) => void;
-  nuvioSelectedFolderCollectionTitle: string;
-  setNuvioSelectedFolderCollectionTitle: (title: string) => void;
-  nuvioPreselectVideoId: string | null;
-  setNuvioPreselectVideoId: (id: string | null) => void;
-  nuvioActivePersonId: number | null;
-  setNuvioActivePersonId: (id: number | null) => void;
-  nuvioHasUnsavedHomeLayout: boolean;
-  setNuvioHasUnsavedHomeLayout: (value: boolean) => void;
-  nuvioTabSaveFn: (() => Promise<void>) | null;
-  setNuvioTabSaveFn: (fn: (() => Promise<void>) | null) => void;
-
   // Poster sizes
   stremioPosterSize: number;
   setStremioPosterSize: (size: number) => void;
-  nuvioPosterSize: number;
-  setNuvioPosterSize: (size: number) => void;
 }
 
 function getInitialEpgView(): 'traditional' | 'alternate' {
@@ -413,81 +375,10 @@ export const useUIStore = create<UIState>((set) => ({
   stremioSelectedCloudCatalogKey: null,
   setStremioSelectedCloudCatalogKey: (key) => set({ stremioSelectedCloudCatalogKey: key }),
 
-  // Nuvio
-  nuvioView: 'home',
-  setNuvioView: (view) => set((state) => {
-    const mainViews = ['home', 'library', 'collections', 'addons', 'scrapers', 'settings'];
-    if (mainViews.includes(view)) {
-      return {
-        nuvioView: view,
-        nuvioHistory: [{ view } as any],
-        nuvioActiveMeta: null,
-        nuvioActivePersonId: null,
-      };
-    }
-    return { nuvioView: view };
-  }),
-  nuvioActiveMeta: null,
-  setNuvioActiveMeta: (meta) => set({ nuvioActiveMeta: meta }),
-  nuvioHistory: [{ view: 'home' } as any],
-  nuvioNavigate: (frame) => set((state) => {
-    const nextHistory = [...state.nuvioHistory, frame];
-    const updates: Partial<UIState> = { nuvioHistory: nextHistory };
-    if (frame.view === 'detail') {
-      updates.nuvioActiveMeta = frame.meta;
-      updates.nuvioActivePersonId = null;
-    } else if (frame.view === 'person') {
-      updates.nuvioActiveMeta = null;
-      updates.nuvioActivePersonId = frame.personId;
-      updates.nuvioView = 'person';
-    } else {
-      updates.nuvioActiveMeta = null;
-      updates.nuvioActivePersonId = null;
-      updates.nuvioView = frame.view;
-    }
-    return updates;
-  }),
-  nuvioGoBack: () => set((state) => {
-    if (state.nuvioHistory.length <= 1) return {};
-    const nextHistory = state.nuvioHistory.slice(0, -1);
-    const top = nextHistory[nextHistory.length - 1];
-    const updates: Partial<UIState> = { nuvioHistory: nextHistory };
-    if (top.view === 'detail') {
-      updates.nuvioActiveMeta = top.meta;
-      updates.nuvioActivePersonId = null;
-    } else if (top.view === 'person') {
-      updates.nuvioActiveMeta = null;
-      updates.nuvioActivePersonId = top.personId;
-      updates.nuvioView = 'person';
-    } else {
-      updates.nuvioActiveMeta = null;
-      updates.nuvioActivePersonId = null;
-      updates.nuvioView = top.view;
-    }
-    return updates;
-  }),
-  nuvioSelectedFolder: null,
-  setNuvioSelectedFolder: (folder) => set({ nuvioSelectedFolder: folder }),
-  nuvioSelectedFolderCollectionTitle: '',
-  setNuvioSelectedFolderCollectionTitle: (title) => set({ nuvioSelectedFolderCollectionTitle: title }),
-  nuvioPreselectVideoId: null,
-  setNuvioPreselectVideoId: (id) => set({ nuvioPreselectVideoId: id }),
-  nuvioActivePersonId: null,
-  setNuvioActivePersonId: (id) => set({ nuvioActivePersonId: id }),
-  nuvioHasUnsavedHomeLayout: false,
-  setNuvioHasUnsavedHomeLayout: (value) => set({ nuvioHasUnsavedHomeLayout: value }),
-  nuvioTabSaveFn: null,
-  setNuvioTabSaveFn: (fn) => set({ nuvioTabSaveFn: fn }),
-
   stremioPosterSize: typeof window !== 'undefined' ? parseInt(localStorage.getItem('stremioPosterSize') || '150', 10) : 150,
   setStremioPosterSize: (size) => {
     if (typeof window !== 'undefined') localStorage.setItem('stremioPosterSize', String(size));
     set({ stremioPosterSize: size });
-  },
-  nuvioPosterSize: typeof window !== 'undefined' ? parseInt(localStorage.getItem('nuvioPosterSize') || '150', 10) : 150,
-  setNuvioPosterSize: (size) => {
-    if (typeof window !== 'undefined') localStorage.setItem('nuvioPosterSize', String(size));
-    set({ nuvioPosterSize: size });
   },
 }));
 
@@ -585,24 +476,3 @@ export const useStremioActivePersonId = () => useUIStore((s) => s.stremioActiveP
 export const useSetStremioActivePersonId = () => useUIStore((s) => s.setStremioActivePersonId);
 export const useStremioNavigate = () => useUIStore((s) => s.stremioNavigate);
 export const useStremioGoBack = () => useUIStore((s) => s.stremioGoBack);
-
-// Nuvio selectors
-export const useNuvioView = () => useUIStore((s) => s.nuvioView);
-export const useSetNuvioView = () => useUIStore((s) => s.setNuvioView);
-export const useNuvioActiveMeta = () => useUIStore((s) => s.nuvioActiveMeta);
-export const useSetNuvioActiveMeta = () => useUIStore((s) => s.setNuvioActiveMeta);
-export const useNuvioSelectedFolder = () => useUIStore((s) => s.nuvioSelectedFolder);
-export const useSetNuvioSelectedFolder = () => useUIStore((s) => s.setNuvioSelectedFolder);
-export const useNuvioSelectedFolderCollectionTitle = () => useUIStore((s) => s.nuvioSelectedFolderCollectionTitle);
-export const useSetNuvioSelectedFolderCollectionTitle = () => useUIStore((s) => s.setNuvioSelectedFolderCollectionTitle);
-export const useNuvioPreselectVideoId = () => useUIStore((s) => s.nuvioPreselectVideoId);
-export const useSetNuvioPreselectVideoId = () => useUIStore((s) => s.setNuvioPreselectVideoId);
-export const useNuvioActivePersonId = () => useUIStore((s) => s.nuvioActivePersonId);
-export const useSetNuvioActivePersonId = () => useUIStore((s) => s.setNuvioActivePersonId);
-export const useNuvioNavigate = () => useUIStore((s) => s.nuvioNavigate);
-export const useNuvioGoBack = () => useUIStore((s) => s.nuvioGoBack);
-export const useNuvioHistory = () => useUIStore((s) => s.nuvioHistory);
-export const useNuvioHasUnsavedHomeLayout = () => useUIStore((s) => s.nuvioHasUnsavedHomeLayout);
-export const useSetNuvioHasUnsavedHomeLayout = () => useUIStore((s) => s.setNuvioHasUnsavedHomeLayout);
-export const useNuvioTabSaveFn = () => useUIStore((s) => s.nuvioTabSaveFn);
-export const useSetNuvioTabSaveFn = () => useUIStore((s) => s.setNuvioTabSaveFn);

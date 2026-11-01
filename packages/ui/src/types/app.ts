@@ -69,7 +69,6 @@ export type ShortcutAction =
     | 'toggleEpgView'
     | 'replayLastStream'
     | 'toggleTransparentGuide'
-    | 'toggleNuvio'
     | 'toggleStrem'
     | 'toggleJellyfin'
     | 'toggleShortcutsOverlay'

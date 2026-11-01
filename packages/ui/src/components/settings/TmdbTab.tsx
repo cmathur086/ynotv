@@ -5,6 +5,7 @@ import { validateAccessToken } from '../../services/tmdb';
 import { validateRpdbApiKey, getRpdbTier, rpdbSupportsBackdrops } from '../../services/rpdb';
 import { SERVICES, type StreamingService } from '../../constants/streamingProviders';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { signInToMediaCore, signOutOfMediaCore, useMediaCoreStore } from '../../services/mediacore';
 import './PlaybackTab.css'; // Reuse existing tab styles
 
 export type MetadataSubTabId = 'tmdb' | 'rpdb';
@@ -66,8 +67,6 @@ interface TmdbTabProps {
   onRpdbBackdropsEnabledChange: (enabled: boolean) => void;
   streamingCatalogsEnabled: boolean;
   onStreamingCatalogsEnabledChange: (enabled: boolean) => void;
-  streamingNuvioCatalogsEnabled: boolean;
-  onStreamingNuvioCatalogsEnabledChange: (enabled: boolean) => void;
   enabledStreamingServices: string[];
   onEnabledStreamingServicesChange: (services: string[]) => void;
 }
@@ -86,18 +85,50 @@ export function TmdbTab({
   onRpdbBackdropsEnabledChange,
   streamingCatalogsEnabled,
   onStreamingCatalogsEnabledChange,
-  streamingNuvioCatalogsEnabled,
-  onStreamingNuvioCatalogsEnabledChange,
   enabledStreamingServices,
   onEnabledStreamingServicesChange,
 }: TmdbTabProps) {
   useTranslation();
   const tmdbLanguage = useSettingsStore((s) => s.tmdbLanguage);
   const setTmdbLanguage = useSettingsStore((s) => s.setTmdbLanguage);
+  const savedTmdbKey = useSettingsStore((s) => s.tmdbApiKey);
+  const mediacoreUser = useMediaCoreStore((s) => s.user);
   const [activeSubTab, setActiveSubTab] = useState<MetadataSubTabId>('tmdb');
   const [tmdbValidating, setTmdbValidating] = useState(false);
   const [rpdbValidating, setRpdbValidating] = useState(false);
   const [showTmdbKey, setShowTmdbKey] = useState(false);
+  const [mcIdentifier, setMcIdentifier] = useState('');
+  const [mcPassword, setMcPassword] = useState('');
+  const [mcBusy, setMcBusy] = useState(false);
+  const [mcError, setMcError] = useState<string | null>(null);
+
+  // Metadata is available from a valid personal key, or from the MediaCore
+  // account when no personal key is saved.
+  const usingMediaCore = mediacoreUser !== null && !savedTmdbKey.trim();
+  const metadataReady = tmdbKeyValid === true || usingMediaCore;
+
+  async function handleMediaCoreSignIn() {
+    if (!mcIdentifier.trim() || !mcPassword) return;
+    setMcBusy(true);
+    setMcError(null);
+    try {
+      await signInToMediaCore(mcIdentifier, mcPassword);
+      setMcPassword('');
+    } catch (e) {
+      setMcError(typeof e === 'string' ? e : (e as Error)?.message ?? String(e));
+    } finally {
+      setMcBusy(false);
+    }
+  }
+
+  async function handleMediaCoreSignOut() {
+    setMcBusy(true);
+    try {
+      await signOutOfMediaCore();
+    } finally {
+      setMcBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (initialSubTab) {
@@ -167,10 +198,73 @@ export function TmdbTab({
       <div className="settings-tab-content">
         {activeSubTab === 'tmdb' && (
           <div className="settings-section">
+            {/* MediaCore account: metadata without a personal TMDB key */}
+            <div className="section-header">
+              <h3>{i18n.t('settings:tmdb.mediacore.title')}</h3>
+            </div>
+            <p className="section-description">{i18n.t('settings:tmdb.mediacore.description')}</p>
+
+            {mediacoreUser ? (
+              <div className="tmdb-form" style={{ marginBottom: '28px' }}>
+                <div className="form-group inline">
+                  <label>
+                    {i18n.t('settings:tmdb.mediacore.signedInAs', {
+                      name: mediacoreUser.displayName || mediacoreUser.username,
+                    })}
+                  </label>
+                  <button type="button" onClick={handleMediaCoreSignOut} disabled={mcBusy}>
+                    {i18n.t('settings:tmdb.mediacore.signOut')}
+                  </button>
+                </div>
+                <p className="form-hint">
+                  {usingMediaCore
+                    ? i18n.t('settings:tmdb.mediacore.usingAccount')
+                    : i18n.t('settings:tmdb.mediacore.personalKeyWins')}
+                </p>
+              </div>
+            ) : (
+              <form
+                className="tmdb-form"
+                style={{ marginBottom: '28px' }}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void handleMediaCoreSignIn();
+                }}
+              >
+                <div className="form-group inline">
+                  <label>{i18n.t('settings:tmdb.mediacore.identifierLabel')}</label>
+                  <input
+                    type="text"
+                    autoComplete="username"
+                    value={mcIdentifier}
+                    onChange={(e) => setMcIdentifier(e.target.value)}
+                  />
+                </div>
+                <div className="form-group inline">
+                  <label>{i18n.t('settings:tmdb.mediacore.passwordLabel')}</label>
+                  <input
+                    type="password"
+                    autoComplete="current-password"
+                    value={mcPassword}
+                    onChange={(e) => setMcPassword(e.target.value)}
+                  />
+                  <button type="submit" disabled={mcBusy || !mcIdentifier.trim() || !mcPassword}>
+                    {mcBusy ? i18n.t('settings:tmdb.mediacore.signingIn') : i18n.t('settings:tmdb.mediacore.signIn')}
+                  </button>
+                </div>
+                {mcError && (
+                  <p className="form-hint" style={{ color: 'var(--error-color, #ff6b6b)' }}>{mcError}</p>
+                )}
+              </form>
+            )}
+
             {/* TMDB Section */}
             <div className="section-header">
               <h3>{i18n.t('settings:tmdb.title')}</h3>
             </div>
+            {!savedTmdbKey.trim() && (
+              <p className="form-hint" style={{ marginTop: 0 }}>{i18n.t('settings:tmdb.mediacore.orPersonalKey')}</p>
+            )}
 
             <p className="section-description">
               {i18n.t('settings:tmdb.description')}{' '}
@@ -274,7 +368,7 @@ export function TmdbTab({
             </p>
 
             {/* Streaming Catalogs Section */}
-            <div className={`streaming-catalogs-section ${tmdbKeyValid !== true ? 'disabled' : ''}`} style={{ marginTop: '2rem' }}>
+            <div className={`streaming-catalogs-section ${!metadataReady ? 'disabled' : ''}`} style={{ marginTop: '2rem' }}>
               <div className="section-header" style={{ marginBottom: '12px' }}>
                 <h4 style={{ margin: 0, textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
                   {i18n.t('settings:tmdb.catalogsTitle')}
@@ -284,31 +378,15 @@ export function TmdbTab({
               <div className="timeshift-settings" style={{ marginTop: 0 }}>
                 <div className="timeshift-toggle-row" style={{ padding: '8px 0', borderBottom: 'none' }}>
                   <div className="timeshift-toggle-info">
-                    <span className="timeshift-toggle-label" style={{ color: tmdbKeyValid === true ? 'var(--text-primary)' : 'var(--text-muted)' }}>{i18n.t('settings:tmdb.enableStremioCatalogs')}</span>
+                    <span className="timeshift-toggle-label" style={{ color: metadataReady ? 'var(--text-primary)' : 'var(--text-muted)' }}>{i18n.t('settings:tmdb.enableStremioCatalogs')}</span>
                     <span className="timeshift-toggle-sub">{i18n.t('settings:tmdb.enableStremioCatalogsSub')}</span>
                   </div>
-                  <label className="toggle-switch" style={{ opacity: tmdbKeyValid === true ? 1 : 0.5, cursor: tmdbKeyValid === true ? 'pointer' : 'not-allowed' }}>
+                  <label className="toggle-switch" style={{ opacity: metadataReady ? 1 : 0.5, cursor: metadataReady ? 'pointer' : 'not-allowed' }}>
                     <input
                       type="checkbox"
                       checked={streamingCatalogsEnabled}
-                      disabled={tmdbKeyValid !== true}
+                      disabled={!metadataReady}
                       onChange={(e) => onStreamingCatalogsEnabledChange(e.target.checked)}
-                    />
-                    <span className="toggle-slider" />
-                  </label>
-                </div>
-
-                <div className="timeshift-toggle-row" style={{ padding: '8px 0', borderBottom: 'none', marginTop: '8px' }}>
-                  <div className="timeshift-toggle-info">
-                    <span className="timeshift-toggle-label" style={{ color: tmdbKeyValid === true ? 'var(--text-primary)' : 'var(--text-muted)' }}>{i18n.t('settings:tmdb.enableNuvioCatalogs')}</span>
-                    <span className="timeshift-toggle-sub">{i18n.t('settings:tmdb.enableNuvioCatalogsSub')}</span>
-                  </div>
-                  <label className="toggle-switch" style={{ opacity: tmdbKeyValid === true ? 1 : 0.5, cursor: tmdbKeyValid === true ? 'pointer' : 'not-allowed' }}>
-                    <input
-                      type="checkbox"
-                      checked={streamingNuvioCatalogsEnabled}
-                      disabled={tmdbKeyValid !== true}
-                      onChange={(e) => onStreamingNuvioCatalogsEnabledChange(e.target.checked)}
                     />
                     <span className="toggle-slider" />
                   </label>
@@ -317,7 +395,7 @@ export function TmdbTab({
 
               {/* Streaming providers checkboxes grid */}
               {(() => {
-                const catalogsEnabled = streamingCatalogsEnabled || streamingNuvioCatalogsEnabled;
+                const catalogsEnabled = streamingCatalogsEnabled;
                 return (
                   <div 
                     className="streaming-providers-grid" 
@@ -326,8 +404,8 @@ export function TmdbTab({
                       gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', 
                       gap: '10px', 
                       marginTop: '1.2rem',
-                      opacity: (catalogsEnabled && tmdbKeyValid === true) ? 1 : 0.5,
-                      pointerEvents: (catalogsEnabled && tmdbKeyValid === true) ? 'auto' : 'none',
+                      opacity: (catalogsEnabled && metadataReady) ? 1 : 0.5,
+                      pointerEvents: (catalogsEnabled && metadataReady) ? 'auto' : 'none',
                       transition: 'opacity 0.2s ease',
                     }}
                   >
@@ -346,7 +424,7 @@ export function TmdbTab({
                             background: '#000000',
                             border: isEnabled ? '1px solid var(--accent-primary)' : '1px solid var(--surface-border)',
                             borderRadius: '8px',
-                            cursor: (catalogsEnabled && tmdbKeyValid === true) ? 'pointer' : 'default',
+                            cursor: (catalogsEnabled && metadataReady) ? 'pointer' : 'default',
                             transition: 'all 0.2s ease',
                         userSelect: 'none',
                       }}
@@ -404,7 +482,7 @@ export function TmdbTab({
             );
           })()}
 
-              {tmdbKeyValid !== true && (
+              {!metadataReady && (
                 <p className="form-hint" style={{ color: 'var(--text-muted)', marginTop: '0.5rem' }}>
                   {i18n.t('settings:tmdb.requiresToken')}
                 </p>

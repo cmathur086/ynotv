@@ -23,7 +23,6 @@ import { ScrobblingTab } from './settings/ScrobblingTab';
 import { SimklTab } from './settings/SimklTab';
 import { JellyfinTab } from './settings/JellyfinTab';
 import { StremTab } from './settings/StremTab';
-import { NuvioTab } from './settings/NuvioTab';
 import { ProxyTab } from './settings/ProxyTab';
 import { DiscordTab } from './settings/DiscordTab';
 import { useModal } from './Modal';
@@ -109,22 +108,6 @@ interface SettingsProps {
   onStremioCacheFetchResultsChange?: (enabled: boolean) => void;
   stremioCacheFetchTimeout?: number;
   onStremioCacheFetchTimeoutChange?: (timeout: number) => void;
-  showNuvioStreamBadges?: boolean;
-  onShowNuvioStreamBadgesChange?: (show: boolean) => void;
-  nuvioBadgeSources?: BadgeSource[];
-  onNuvioBadgeSourcesChange?: (sources: BadgeSource[]) => void;
-  nuvioBadgeSize?: number;
-  onNuvioBadgeSizeChange?: (size: number) => void;
-  nuvioShowFileSizeBadges?: boolean;
-  onNuvioShowFileSizeBadgesChange?: (enabled: boolean) => void;
-  nuvioStreamBadgePlacement?: 'top' | 'bottom';
-  onNuvioStreamBadgePlacementChange?: (placement: 'top' | 'bottom') => void;
-  showNuvioHoverDetails?: boolean;
-  onShowNuvioHoverDetailsChange?: (show: boolean) => void;
-  nuvioCacheFetchResults?: boolean;
-  onNuvioCacheFetchResultsChange?: (enabled: boolean) => void;
-  nuvioCacheFetchTimeout?: number;
-  onNuvioCacheFetchTimeoutChange?: (timeout: number) => void;
   liveTvDesign?: 'v1' | 'v2' | 'v3';
   epgMetadataBadgeResolution?: boolean;
   onEpgMetadataBadgeResolutionChange?: (enabled: boolean) => void;
@@ -253,22 +236,6 @@ export function Settings({
   onStremioCacheFetchResultsChange,
   stremioCacheFetchTimeout: stremioCacheFetchTimeoutProp,
   onStremioCacheFetchTimeoutChange,
-  showNuvioStreamBadges: showNuvioStreamBadgesProp,
-  onShowNuvioStreamBadgesChange,
-  nuvioBadgeSources: nuvioBadgeSourcesProp,
-  onNuvioBadgeSourcesChange,
-  nuvioBadgeSize: nuvioBadgeSizeProp,
-  onNuvioBadgeSizeChange,
-  nuvioShowFileSizeBadges: nuvioShowFileSizeBadgesProp,
-  onNuvioShowFileSizeBadgesChange,
-  nuvioStreamBadgePlacement: nuvioStreamBadgePlacementProp,
-  onNuvioStreamBadgePlacementChange,
-  showNuvioHoverDetails: showNuvioHoverDetailsProp,
-  onShowNuvioHoverDetailsChange,
-  nuvioCacheFetchResults: nuvioCacheFetchResultsProp,
-  onNuvioCacheFetchResultsChange,
-  nuvioCacheFetchTimeout: nuvioCacheFetchTimeoutProp,
-  onNuvioCacheFetchTimeoutChange,
   liveTvDesign,
   epgMetadataBadgeResolution: epgMetadataBadgeResolutionProp,
   onEpgMetadataBadgeResolutionChange,
@@ -330,59 +297,13 @@ export function Settings({
   useTranslation();
   const [activeTab, setActiveTab] = useState<SettingsTabId>(initialTab);
   const { showConfirm, ModalComponent } = useModal();
-  const nuvioHasUnsavedHomeLayout = useUIStore((s) => s.nuvioHasUnsavedHomeLayout);
-  const nuvioTabSaveFn = useUIStore((s) => s.nuvioTabSaveFn);
 
   const handleTabChange = (newTab: SettingsTabId) => {
-    if (activeTab === 'nuvio' && nuvioHasUnsavedHomeLayout) {
-      showConfirm(
-        i18n.t('settings:unsavedChanges'),
-        i18n.t('settings:unsavedHomeLayoutConfirm'),
-        async () => {
-          try {
-            await nuvioTabSaveFn?.();
-            useUIStore.setState({ nuvioHasUnsavedHomeLayout: false });
-            setActiveTab(newTab);
-          } catch (err) {
-            // Error was already alerted inside child component
-          }
-        },
-        () => {
-          useUIStore.setState({ nuvioHasUnsavedHomeLayout: false });
-          setActiveTab(newTab);
-        },
-        i18n.t('common:save'),
-        i18n.t('settings:discardChanges')
-      );
-    } else {
-      setActiveTab(newTab);
-    }
+    setActiveTab(newTab);
   };
 
   const handleClose = () => {
-    if (activeTab === 'nuvio' && nuvioHasUnsavedHomeLayout) {
-      showConfirm(
-        i18n.t('settings:unsavedChanges'),
-        i18n.t('settings:unsavedHomeLayoutConfirm'),
-        async () => {
-          try {
-            await nuvioTabSaveFn?.();
-            useUIStore.setState({ nuvioHasUnsavedHomeLayout: false });
-            onClose();
-          } catch (err) {
-            // Error was already alerted inside child component
-          }
-        },
-        () => {
-          useUIStore.setState({ nuvioHasUnsavedHomeLayout: false });
-          onClose();
-        },
-        i18n.t('common:save'),
-        i18n.t('settings:discardChanges')
-      );
-    } else {
-      onClose();
-    }
+    onClose();
   };
   const [isFullScreen, setIsFullScreen] = useState<boolean>(() => {
     return localStorage.getItem('settings_fullscreen') === 'true';
@@ -415,8 +336,6 @@ export function Settings({
   const setTmdbApiKey = useSettingsStore((s) => s.setTmdbApiKey);
   const streamingCatalogsEnabled = useSettingsStore((s) => s.streamingCatalogsEnabled);
   const setStreamingCatalogsEnabled = useSettingsStore((s) => s.setStreamingCatalogsEnabled);
-  const streamingNuvioCatalogsEnabled = useSettingsStore((s) => s.streamingNuvioCatalogsEnabled);
-  const setStreamingNuvioCatalogsEnabled = useSettingsStore((s) => s.setStreamingNuvioCatalogsEnabled);
   const enabledStreamingServices = useSettingsStore((s) => s.enabledStreamingServices);
   const setEnabledStreamingServices = useSettingsStore((s) => s.setEnabledStreamingServices);
   const posterDbApiKey = useSettingsStore((s) => s.posterDbApiKey);
@@ -510,7 +429,7 @@ export function Settings({
   const [rememberLastChannels, setRememberLastChannels] = useState(false);
   const [reopenLastOnStartup, setReopenLastOnStartup] = useState(false);
   const [savedLayoutState, setSavedLayoutState] = useState<SavedLayoutState | null>(null);
-  const [startupView, setStartupView] = useState<'none' | 'guide' | 'movies' | 'series' | 'dvr' | 'sports' | 'calendar' | 'stremio' | 'nuvio'>('none');
+  const [startupView, setStartupView] = useState<'none' | 'guide' | 'movies' | 'series' | 'dvr' | 'sports' | 'calendar' | 'stremio'>('none');
   const navHiddenTabs = useUIStore((s) => s.navHiddenTabs);
   const navHiddenTabsStore = useUIStore((s) => s.setNavHiddenTabs);
   const epgHiddenButtons = useUIStore((s) => s.epgHiddenButtons);
@@ -548,20 +467,6 @@ export function Settings({
   const [streamBadgePlacement, setStreamBadgePlacement] = useState<'top' | 'bottom'>('bottom');
   const [stremioCacheFetchResults, setStremioCacheFetchResults] = useState(false);
   const [stremioCacheFetchTimeout, setStremioCacheFetchTimeout] = useState(5);
-  const [showNuvioStreamBadges, setShowNuvioStreamBadges] = useState(true);
-  const [nuvioBadgeSources, setNuvioBadgeSources] = useState<BadgeSource[]>(DEFAULT_BADGE_SOURCES);
-  const [nuvioBadgeSize, setNuvioBadgeSize] = useState(100);
-  const [nuvioShowFileSizeBadges, setNuvioShowFileSizeBadges] = useState(true);
-  const [nuvioStreamBadgePlacement, setNuvioStreamBadgePlacement] = useState<'top' | 'bottom'>('bottom');
-  const [showNuvioHoverDetails, setShowNuvioHoverDetails] = useState(true);
-  const [nuvioCacheFetchResults, setNuvioCacheFetchResults] = useState(false);
-  const [nuvioCacheFetchTimeout, setNuvioCacheFetchTimeout] = useState(5);
-  const [nuvioAutoPlayMode, setNuvioAutoPlayMode] = useState<StreamAutoPlayMode>('manual');
-  const [nuvioAutoPlayTimeout, setNuvioAutoPlayTimeout] = useState(0);
-  const [nuvioAutoPlaySourceScope, setNuvioAutoPlaySourceScope] = useState<StreamAutoPlaySourceScope>('all');
-  const [nuvioAutoPlayAllowedAddons, setNuvioAutoPlayAllowedAddons] = useState<string[]>([]);
-  const [nuvioAutoPlayAllowedPlugins, setNuvioAutoPlayAllowedPlugins] = useState<string[]>([]);
-  const [nuvioAutoPlayRegex, setNuvioAutoPlayRegex] = useState<string>('');
 
   useEffect(() => {
     if (stremioStreamPickerModeProp !== undefined) {
@@ -616,54 +521,6 @@ export function Settings({
       setStremioCacheFetchTimeout(stremioCacheFetchTimeoutProp);
     }
   }, [stremioCacheFetchTimeoutProp]);
-
-  useEffect(() => {
-    if (showNuvioStreamBadgesProp !== undefined) {
-      setShowNuvioStreamBadges(showNuvioStreamBadgesProp);
-    }
-  }, [showNuvioStreamBadgesProp]);
-
-  useEffect(() => {
-    if (nuvioBadgeSourcesProp !== undefined) {
-      setNuvioBadgeSources(mergeDefaultBadgeSources(nuvioBadgeSourcesProp));
-    }
-  }, [nuvioBadgeSourcesProp]);
-
-  useEffect(() => {
-    if (nuvioBadgeSizeProp !== undefined) {
-      setNuvioBadgeSize(nuvioBadgeSizeProp);
-    }
-  }, [nuvioBadgeSizeProp]);
-
-  useEffect(() => {
-    if (nuvioShowFileSizeBadgesProp !== undefined) {
-      setNuvioShowFileSizeBadges(nuvioShowFileSizeBadgesProp);
-    }
-  }, [nuvioShowFileSizeBadgesProp]);
-
-  useEffect(() => {
-    if (nuvioStreamBadgePlacementProp !== undefined) {
-      setNuvioStreamBadgePlacement(nuvioStreamBadgePlacementProp);
-    }
-  }, [nuvioStreamBadgePlacementProp]);
-
-  useEffect(() => {
-    if (showNuvioHoverDetailsProp !== undefined) {
-      setShowNuvioHoverDetails(showNuvioHoverDetailsProp);
-    }
-  }, [showNuvioHoverDetailsProp]);
-
-  useEffect(() => {
-    if (nuvioCacheFetchResultsProp !== undefined) {
-      setNuvioCacheFetchResults(nuvioCacheFetchResultsProp);
-    }
-  }, [nuvioCacheFetchResultsProp]);
-
-  useEffect(() => {
-    if (nuvioCacheFetchTimeoutProp !== undefined) {
-      setNuvioCacheFetchTimeout(nuvioCacheFetchTimeoutProp);
-    }
-  }, [nuvioCacheFetchTimeoutProp]);
 
   const subtitleSettings = useSettingsStore((s) => s.subtitleSettings);
   const setSubtitleSettings = useSettingsStore((s) => s.setSubtitleSettings);
@@ -982,7 +839,6 @@ export function Settings({
         discordShowPoster?: boolean;
         discordShowTimestamp?: boolean;
         streamingCatalogsEnabled?: boolean;
-        streamingNuvioCatalogsEnabled?: boolean;
         enabledStreamingServices?: string[];
         debugLoggingEnabled?: boolean;
         addonSubtitleTraceEnabled?: boolean;
@@ -1007,7 +863,7 @@ export function Settings({
         rememberLastChannels?: boolean;
         reopenLastOnStartup?: boolean;
         savedLayoutState?: SavedLayoutState;
-        startupView?: 'none' | 'guide' | 'movies' | 'series' | 'dvr' | 'sports' | 'calendar' | 'stremio' | 'nuvio';
+        startupView?: 'none' | 'guide' | 'movies' | 'series' | 'dvr' | 'sports' | 'calendar' | 'stremio';
         mpvParams?: string;
         mpvHwdecEnabled?: boolean;
         timeshiftEnabled?: boolean;
@@ -1086,11 +942,6 @@ export function Settings({
         stremioBadgeSize?: number;
         showFileSizeBadges?: boolean;
         streamBadgePlacement?: 'top' | 'bottom';
-        showNuvioStreamBadges?: boolean;
-        nuvioBadgeSources?: BadgeSource[];
-        nuvioBadgeSize?: number;
-        nuvioShowFileSizeBadges?: boolean;
-        nuvioStreamBadgePlacement?: 'top' | 'bottom';
         navHiddenTabs?: string[];
         epgHiddenButtons?: string[];
         castEnabled?: boolean;
@@ -1106,15 +957,6 @@ export function Settings({
         showRecentlyViewed?: boolean;
         favoritesMode?: 'global' | 'perSource' | 'both';
         alwaysSortFavoritesAlphabetically?: boolean;
-        showNuvioHoverDetails?: boolean;
-        nuvioAutoPlayMode?: StreamAutoPlayMode;
-        nuvioAutoPlayTimeout?: number;
-        nuvioAutoPlaySourceScope?: StreamAutoPlaySourceScope;
-        nuvioAutoPlayAllowedAddons?: string[];
-        nuvioAutoPlayAllowedPlugins?: string[];
-        nuvioAutoPlayRegex?: string;
-        nuvioCacheFetchResults?: boolean;
-        nuvioCacheFetchTimeout?: number;
         includeAllChannelsToPlaylist?: boolean;
         vodAutoPlayNextEpisode?: boolean;
         vodShowSourceBadge?: boolean;
@@ -1293,42 +1135,6 @@ export function Settings({
       }
       if (settings.streamBadgePlacement !== undefined) {
         setStreamBadgePlacement(settings.streamBadgePlacement as 'top' | 'bottom');
-      }
-      setShowNuvioStreamBadges(settings.showNuvioStreamBadges ?? true);
-      setNuvioBadgeSources(mergeDefaultBadgeSources(settings.nuvioBadgeSources as BadgeSource[] | undefined));
-      setNuvioBadgeSize(settings.nuvioBadgeSize ?? 100);
-      if (settings.nuvioShowFileSizeBadges !== undefined) {
-        setNuvioShowFileSizeBadges(settings.nuvioShowFileSizeBadges);
-      }
-      if (settings.nuvioStreamBadgePlacement !== undefined) {
-        setNuvioStreamBadgePlacement(settings.nuvioStreamBadgePlacement as 'top' | 'bottom');
-      }
-      if (settings.showNuvioHoverDetails !== undefined) {
-        setShowNuvioHoverDetails(settings.showNuvioHoverDetails);
-      }
-      if (settings.nuvioAutoPlayMode !== undefined) {
-        setNuvioAutoPlayMode(settings.nuvioAutoPlayMode as StreamAutoPlayMode);
-      }
-      if (settings.nuvioAutoPlayTimeout !== undefined) {
-        setNuvioAutoPlayTimeout(settings.nuvioAutoPlayTimeout as number);
-      }
-      if (settings.nuvioAutoPlaySourceScope !== undefined) {
-        setNuvioAutoPlaySourceScope(settings.nuvioAutoPlaySourceScope as StreamAutoPlaySourceScope);
-      }
-      if (settings.nuvioAutoPlayAllowedAddons !== undefined) {
-        setNuvioAutoPlayAllowedAddons(settings.nuvioAutoPlayAllowedAddons as string[]);
-      }
-      if (settings.nuvioAutoPlayAllowedPlugins !== undefined) {
-        setNuvioAutoPlayAllowedPlugins(settings.nuvioAutoPlayAllowedPlugins as string[]);
-      }
-      if (settings.nuvioAutoPlayRegex !== undefined) {
-        setNuvioAutoPlayRegex(settings.nuvioAutoPlayRegex as string);
-      }
-      if (settings.nuvioCacheFetchResults !== undefined) {
-        setNuvioCacheFetchResults(settings.nuvioCacheFetchResults as boolean);
-      }
-      if (settings.nuvioCacheFetchTimeout !== undefined) {
-        setNuvioCacheFetchTimeout(settings.nuvioCacheFetchTimeout as number);
       }
 
       // Load LiveTV settings. The epg-* CSS classes are owned by the DOM
@@ -1741,125 +1547,6 @@ export function Settings({
     }
     if (window.storage) {
       await window.storage.updateSettings({ stremioCacheFetchTimeout: timeout });
-    }
-  };
-
-  const handleShowNuvioStreamBadgesChange = async (show: boolean) => {
-    setShowNuvioStreamBadges(show);
-    if (onShowNuvioStreamBadgesChange) {
-      onShowNuvioStreamBadgesChange(show);
-    }
-    if (window.storage) {
-      await window.storage.updateSettings({ showNuvioStreamBadges: show });
-    }
-  };
-
-  const handleNuvioBadgeSourcesChange = async (sources: BadgeSource[]) => {
-    setNuvioBadgeSources(sources);
-    if (onNuvioBadgeSourcesChange) {
-      onNuvioBadgeSourcesChange(sources);
-    }
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioBadgeSources: sources });
-    }
-  };
-
-  const handleNuvioBadgeSizeChange = (size: number) => {
-    setNuvioBadgeSize(size);
-    if (onNuvioBadgeSizeChange) {
-      onNuvioBadgeSizeChange(size);
-    }
-  };
-
-  const handleNuvioShowFileSizeBadgesChange = async (show: boolean) => {
-    setNuvioShowFileSizeBadges(show);
-    if (onNuvioShowFileSizeBadgesChange) {
-      onNuvioShowFileSizeBadgesChange(show);
-    }
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioShowFileSizeBadges: show });
-    }
-  };
-
-  const handleNuvioStreamBadgePlacementChange = async (placement: 'top' | 'bottom') => {
-    setNuvioStreamBadgePlacement(placement);
-    if (onNuvioStreamBadgePlacementChange) {
-      onNuvioStreamBadgePlacementChange(placement);
-    }
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioStreamBadgePlacement: placement });
-    }
-  };
-
-  const handleShowNuvioHoverDetailsChange = async (show: boolean) => {
-    setShowNuvioHoverDetails(show);
-    if (onShowNuvioHoverDetailsChange) {
-      onShowNuvioHoverDetailsChange(show);
-    }
-    if (window.storage) {
-      await window.storage.updateSettings({ showNuvioHoverDetails: show });
-    }
-  };
-
-  const handleNuvioAutoPlayModeChange = async (mode: StreamAutoPlayMode) => {
-    setNuvioAutoPlayMode(mode);
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioAutoPlayMode: mode });
-    }
-  };
-
-  const handleNuvioAutoPlayTimeoutChange = async (timeout: number) => {
-    setNuvioAutoPlayTimeout(timeout);
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioAutoPlayTimeout: timeout });
-    }
-  };
-
-  const handleNuvioAutoPlaySourceScopeChange = async (scope: StreamAutoPlaySourceScope) => {
-    setNuvioAutoPlaySourceScope(scope);
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioAutoPlaySourceScope: scope });
-    }
-  };
-
-  const handleNuvioAutoPlayAllowedAddonsChange = async (addonIds: string[]) => {
-    setNuvioAutoPlayAllowedAddons(addonIds);
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioAutoPlayAllowedAddons: addonIds });
-    }
-  };
-
-  const handleNuvioAutoPlayAllowedPluginsChange = async (pluginIds: string[]) => {
-    setNuvioAutoPlayAllowedPlugins(pluginIds);
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioAutoPlayAllowedPlugins: pluginIds });
-    }
-  };
-
-  const handleNuvioAutoPlayRegexChange = async (regex: string) => {
-    setNuvioAutoPlayRegex(regex);
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioAutoPlayRegex: regex });
-    }
-  };
-
-  const handleNuvioCacheFetchResultsChange = async (enabled: boolean) => {
-    setNuvioCacheFetchResults(enabled);
-    if (onNuvioCacheFetchResultsChange) {
-      onNuvioCacheFetchResultsChange(enabled);
-    }
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioCacheFetchResults: enabled });
-    }
-  };
-
-  const handleNuvioCacheFetchTimeoutChange = async (timeout: number) => {
-    setNuvioCacheFetchTimeout(timeout);
-    if (onNuvioCacheFetchTimeoutChange) {
-      onNuvioCacheFetchTimeoutChange(timeout);
-    }
-    if (window.storage) {
-      await window.storage.updateSettings({ nuvioCacheFetchTimeout: timeout });
     }
   };
 
@@ -2677,7 +2364,7 @@ export function Settings({
     }
   };
 
-  const handleStartupViewChange = async (value: 'none' | 'guide' | 'movies' | 'series' | 'dvr' | 'sports' | 'calendar' | 'stremio' | 'nuvio') => {
+  const handleStartupViewChange = async (value: 'none' | 'guide' | 'movies' | 'series' | 'dvr' | 'sports' | 'calendar' | 'stremio') => {
     setStartupView(value);
     if (window.storage) {
       await window.storage.updateSettings({ startupView: value });
@@ -2724,10 +2411,6 @@ export function Settings({
   // `ynotv:streaming-catalogs-changed` for any remaining listeners.
   const handleStreamingCatalogsEnabledChange = (enabled: boolean) => {
     setStreamingCatalogsEnabled(enabled);
-  };
-
-  const handleStreamingNuvioCatalogsEnabledChange = (enabled: boolean) => {
-    setStreamingNuvioCatalogsEnabled(enabled);
   };
 
   const handleEnabledStreamingServicesChange = (services: string[]) => {
@@ -2781,39 +2464,6 @@ export function Settings({
             onStremioCacheFetchResultsChange={handleStremioCacheFetchResultsChange}
             stremioCacheFetchTimeout={stremioCacheFetchTimeout}
             onStremioCacheFetchTimeoutChange={handleStremioCacheFetchTimeoutChange}
-          />
-        );
-      case 'nuvio':
-        return (
-          <NuvioTab
-            showNuvioStreamBadges={showNuvioStreamBadges}
-            onShowNuvioStreamBadgesChange={handleShowNuvioStreamBadgesChange}
-            nuvioBadgeSources={nuvioBadgeSources}
-            onNuvioBadgeSourcesChange={handleNuvioBadgeSourcesChange}
-            nuvioBadgeSize={nuvioBadgeSize}
-            onNuvioBadgeSizeChange={handleNuvioBadgeSizeChange}
-            nuvioShowFileSizeBadges={nuvioShowFileSizeBadges}
-            onNuvioShowFileSizeBadgesChange={handleNuvioShowFileSizeBadgesChange}
-            nuvioStreamBadgePlacement={nuvioStreamBadgePlacement}
-            onNuvioStreamBadgePlacementChange={handleNuvioStreamBadgePlacementChange}
-            showNuvioHoverDetails={showNuvioHoverDetails}
-            onShowNuvioHoverDetailsChange={handleShowNuvioHoverDetailsChange}
-            nuvioAutoPlayMode={nuvioAutoPlayMode}
-            onNuvioAutoPlayModeChange={handleNuvioAutoPlayModeChange}
-            nuvioAutoPlayTimeout={nuvioAutoPlayTimeout}
-            onNuvioAutoPlayTimeoutChange={handleNuvioAutoPlayTimeoutChange}
-            nuvioAutoPlaySourceScope={nuvioAutoPlaySourceScope}
-            onNuvioAutoPlaySourceScopeChange={handleNuvioAutoPlaySourceScopeChange}
-            nuvioAutoPlayAllowedAddons={nuvioAutoPlayAllowedAddons}
-            onNuvioAutoPlayAllowedAddonsChange={handleNuvioAutoPlayAllowedAddonsChange}
-            nuvioAutoPlayAllowedPlugins={nuvioAutoPlayAllowedPlugins}
-            onNuvioAutoPlayAllowedPluginsChange={handleNuvioAutoPlayAllowedPluginsChange}
-            nuvioAutoPlayRegex={nuvioAutoPlayRegex}
-            onNuvioAutoPlayRegexChange={handleNuvioAutoPlayRegexChange}
-            nuvioCacheFetchResults={nuvioCacheFetchResults}
-            onNuvioCacheFetchResultsChange={handleNuvioCacheFetchResultsChange}
-            nuvioCacheFetchTimeout={nuvioCacheFetchTimeout}
-            onNuvioCacheFetchTimeoutChange={handleNuvioCacheFetchTimeoutChange}
           />
         );
       case 'security':
@@ -3055,8 +2705,6 @@ export function Settings({
             onRpdbBackdropsEnabledChange={setRpdbBackdropsEnabled}
             streamingCatalogsEnabled={streamingCatalogsEnabled}
             onStreamingCatalogsEnabledChange={handleStreamingCatalogsEnabledChange}
-            streamingNuvioCatalogsEnabled={streamingNuvioCatalogsEnabled}
-            onStreamingNuvioCatalogsEnabledChange={handleStreamingNuvioCatalogsEnabledChange}
             enabledStreamingServices={enabledStreamingServices}
             onEnabledStreamingServicesChange={handleEnabledStreamingServicesChange}
           />

@@ -1975,7 +1975,20 @@
       "hideKey": "Sakrij ključ",
       "showKey": "Prikaži ključ",
       "languageLabel": "Jezik metapodataka",
-      "languageHint": "Naslovi, opisi i žanrovi iz TMDB-a bit će prikazani na ovom jeziku."
+      "languageHint": "Naslovi, opisi i žanrovi iz TMDB-a bit će prikazani na ovom jeziku.",
+      "mediacore": {
+        "title": "MediaCore account",
+        "description": "Sign in with your MediaCore account to load posters, descriptions and catalogs without a TMDB key of your own.",
+        "identifierLabel": "Username or email",
+        "passwordLabel": "Password",
+        "signIn": "Sign in",
+        "signingIn": "Signing in…",
+        "signOut": "Sign out",
+        "signedInAs": "Signed in as {{name}}",
+        "usingAccount": "Metadata is coming from your MediaCore account.",
+        "personalKeyWins": "A personal TMDB key is set below, so it is used instead of your MediaCore account.",
+        "orPersonalKey": "Or use your own TMDB key"
+      }
     },
     "overlay": {
       "channelInfoOverlay": "Preklop sa informacijama o kanalu",

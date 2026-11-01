@@ -185,14 +185,14 @@ describe('Subtitle modal offers add-on tracks', () => {
     expect(v3).toContain('html.modern-ui-v3[data-theme="light"] .subtitle-addon-track-btn.loaded .subtitle-track-variant-title');
   });
 
-  it('is wired up by the player and scoped to Stremio/Nuvio media', () => {
-    expect(app).toContain("addonSubtitleTracks={(vodInfo?.source_id === 'stremio' || vodInfo?.source_id === 'nuvio') ? addonSubtitleTracks : undefined}");
+  it('is wired up by the player and scoped to Stremio media', () => {
+    expect(app).toContain("addonSubtitleTracks={vodInfo?.source_id === 'stremio' ? addonSubtitleTracks : undefined}");
     expect(app).toContain('onAddonSubtitleSelect={handleAddonSubtitleSelect}');
     expect(app).toContain('clearAddonSubtitleTracks();');
   });
 
   it('clears add-on subtitle tracks whenever non-Stremio media plays', () => {
-    expect(app).toContain("if (vodInfo && vodInfo.source_id !== 'stremio' && vodInfo.source_id !== 'nuvio') {");
+    expect(app).toContain("if (vodInfo && vodInfo.source_id !== 'stremio') {");
     expect(app).toContain("if (channel.source_id !== 'vod')");
     expect(app).toContain('clearAddonSubtitleTracksRef.current?.();');
   });

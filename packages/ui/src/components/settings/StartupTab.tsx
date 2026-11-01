@@ -21,10 +21,10 @@ interface StartupTabProps {
   rememberLastChannels: boolean;
   reopenLastOnStartup: boolean;
   savedLayoutState: SavedLayoutState | null;
-  startupView: 'none' | 'guide' | 'movies' | 'series' | 'dvr' | 'sports' | 'calendar' | 'stremio' | 'nuvio';
+  startupView: 'none' | 'guide' | 'movies' | 'series' | 'dvr' | 'sports' | 'calendar' | 'stremio';
   onRememberLastChannelsChange: (value: boolean) => void;
   onReopenLastOnStartupChange: (value: boolean) => void;
-  onStartupViewChange: (value: 'none' | 'guide' | 'movies' | 'series' | 'dvr' | 'sports' | 'calendar' | 'stremio' | 'nuvio') => void;
+  onStartupViewChange: (value: 'none' | 'guide' | 'movies' | 'series' | 'dvr' | 'sports' | 'calendar' | 'stremio') => void;
 }
 
 export function StartupTab({
@@ -135,7 +135,6 @@ export function StartupTab({
             <option value="calendar">{i18n.t('settings:startup.views.calendar')}</option>
             <option value="dvr">{i18n.t('settings:startup.views.dvr')}</option>
             <option value="stremio">{i18n.t('settings:startup.views.stremio')}</option>
-            <option value="nuvio">{i18n.t('settings:startup.views.nuvio')}</option>
           </select>
         </div>
 

@@ -86,7 +86,6 @@ interface NowPlayingBarProps {
   onReplayStream?: () => void;
   onSwitchStream?: (stream: StremioStream) => void;
   compiledBadgeRules?: { pattern: RegExp; badge: StremioStreamBadge }[];
-  compiledNuvioBadgeRules?: { pattern: RegExp; badge: StremioStreamBadge }[];
   onTogglePip?: () => void;
   pipMode?: boolean;
   hasAudioDelay?: boolean;
@@ -161,7 +160,6 @@ export function NowPlayingBar({
   onReplayStream,
   onSwitchStream,
   compiledBadgeRules,
-  compiledNuvioBadgeRules,
   onTogglePip,
   pipMode,
   hasAudioDelay,
@@ -379,10 +377,10 @@ export function NowPlayingBar({
   // Source picker modal state
   const [showSourcePicker, setShowSourcePicker] = useState(false);
 
-  // Show source picker button only for Stremio/Nuvio VOD content
-  const isStremioNuvio = isVod && vodInfo && (vodInfo.source_id === 'stremio' || vodInfo.source_id === 'nuvio');
-  const stremioSourceId = isStremioNuvio && vodInfo?.stremioId ? vodInfo.stremioId : null;
-  const stremioSourceType = isStremioNuvio && vodInfo?.stremioType ? vodInfo.stremioType : null;
+  // Show source picker button only for Stremio VOD content
+  const isStremioVod = isVod && vodInfo && vodInfo.source_id === 'stremio';
+  const stremioSourceId = isStremioVod && vodInfo?.stremioId ? vodInfo.stremioId : null;
+  const stremioSourceType = isStremioVod && vodInfo?.stremioType ? vodInfo.stremioType : null;
 
   // Aspect ratio menu state
   const [showAspectMenu, setShowAspectMenu] = useState(false);
@@ -1180,7 +1178,7 @@ export function NowPlayingBar({
                   </button>
                 )}
 
-                {isStremioNuvio && onSwitchStream && stremioSourceId && stremioSourceType && (
+                {isStremioVod && onSwitchStream && stremioSourceId && stremioSourceType && (
                   <button
                     className="npb-clean-btn npb-source-picker-btn"
                     onClick={() => setShowSourcePicker(true)}
@@ -1620,7 +1618,7 @@ export function NowPlayingBar({
                     <ConnectionIcon />
                   </button>
                 )}
-                {isStremioNuvio && onSwitchStream && stremioSourceId && stremioSourceType && (
+                {isStremioVod && onSwitchStream && stremioSourceId && stremioSourceType && (
                   <button
                     className="npb-btn npb-source-picker-btn"
                     onClick={() => setShowSourcePicker(true)}
@@ -1867,14 +1865,14 @@ export function NowPlayingBar({
         )}
 
         {/* Source Picker Modal */}
-        {isStremioNuvio && showSourcePicker && stremioSourceId && stremioSourceType && onSwitchStream && (
+        {isStremioVod && showSourcePicker && stremioSourceId && stremioSourceType && onSwitchStream && (
           <SourcePickerModal
-            source={vodInfo?.source_id === 'nuvio' ? 'nuvio' : 'stremio'}
+            source="stremio"
             type={stremioSourceType}
             id={stremioSourceId}
             currentAddonName={vodInfo?.addonName}
             currentUrl={vodInfo?.url}
-            compiledBadgeRules={vodInfo?.source_id === 'nuvio' ? (compiledNuvioBadgeRules || compiledBadgeRules) : compiledBadgeRules}
+            compiledBadgeRules={compiledBadgeRules}
             onSelect={(stream) => {
               setShowSourcePicker(false);
               onSwitchStream(stream);
