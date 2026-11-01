@@ -298,6 +298,7 @@ pub fn apply_icon(app: &AppHandle, icon_id: &str) -> Result<(), String> {
         .map_err(|e| format!("Failed to parse icon image: {}", e))?;
 
     // Update system tray icon
+    #[cfg(desktop)]
     if let Some(tray) = app.tray_by_id("main") {
         let _ = tray.set_icon(Some(image.clone()));
     }
@@ -310,7 +311,11 @@ pub fn apply_icon(app: &AppHandle, icon_id: &str) -> Result<(), String> {
         }
     }
 
-    #[cfg(not(target_os = "windows"))]
+    // Mobile launchers take the icon from the package; nothing to update live.
+    #[cfg(mobile)]
+    let _ = (app, image);
+
+    #[cfg(all(desktop, not(target_os = "windows")))]
     {
         for (_, win) in app.webview_windows() {
             let _ = win.set_icon(image.clone());

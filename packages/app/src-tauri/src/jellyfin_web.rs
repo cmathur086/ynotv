@@ -28,10 +28,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
-use tauri::{
-    AppHandle, Emitter, Listener, LogicalPosition, LogicalSize, Manager, Position, Runtime, Size,
-    WebviewUrl,
-};
+use tauri::{AppHandle, Emitter, Listener, Manager, Runtime, WebviewUrl};
+#[cfg(desktop)]
+use tauri::{LogicalPosition, LogicalSize, Position, Size};
 
 /// Label used for the embedded Jellyfin child webview.
 const JELLYFIN_LABEL: &str = "jellyfin-embed";
@@ -435,9 +434,13 @@ struct PlayPayload {
 
 /// Remove an existing Jellyfin embed child webview, if present.
 fn close_existing<R: Runtime>(app: &AppHandle<R>) {
+    // Child webviews only exist on desktop; on Android the embed never opens.
+    #[cfg(desktop)]
     if let Some(wv) = app.get_webview(JELLYFIN_LABEL) {
         let _ = wv.close();
     }
+    #[cfg(mobile)]
+    let _ = app;
 }
 
 /// Wire the one-time app-wide listener that, while a Jellyfin stream plays
@@ -557,6 +560,43 @@ fn ensure_status_listener<R: Runtime>(app: &AppHandle<R>) {
     });
 }
 
+/// Attach the Jellyfin page to the main window as a child WebView.
+#[cfg(desktop)]
+fn attach_embed<R: Runtime>(
+    window: &tauri::Window<R>,
+    webview_builder: tauri::webview::WebviewBuilder<R>,
+    x: f64,
+    y: f64,
+    width: f64,
+    height: f64,
+) -> Result<(), String> {
+    let child = window
+        .add_child(
+            webview_builder,
+            Position::Logical(LogicalPosition::new(x, y)),
+            Size::Logical(LogicalSize::new(width, height)),
+        )
+        .map_err(|e| e.to_string())?;
+
+    child
+        .set_auto_resize(false)
+        .map_err(|e| e.to_string())
+}
+
+/// Android has a single WebView per activity, so the Jellyfin web client
+/// can't be embedded as a child; the native Jellyfin page still works.
+#[cfg(mobile)]
+fn attach_embed<R: Runtime>(
+    _window: &tauri::Window<R>,
+    _webview_builder: tauri::webview::WebviewBuilder<R>,
+    _x: f64,
+    _y: f64,
+    _width: f64,
+    _height: f64,
+) -> Result<(), String> {
+    Err("The embedded Jellyfin web client is not available on Android".to_string())
+}
+
 /// Open (or re-open) the embedded Jellyfin child WebView at the given logical
 /// bounds, with the Jellyfin media-hijack init script injected.
 #[tauri::command]
@@ -614,7 +654,7 @@ pub async fn jellyfin_embed_open<R: Runtime>(
         INIT_SCRIPT
     );
 
-    let webview_builder =
+    let webview_builder: tauri::webview::WebviewBuilder<R> =
         tauri::webview::WebviewBuilder::new(JELLYFIN_LABEL, WebviewUrl::External(parsed_url))
             .devtools(true)
             .initialization_script(&init_script)
@@ -750,17 +790,7 @@ pub async fn jellyfin_embed_open<R: Runtime>(
                 }
             });
 
-    let child = window
-        .add_child(
-            webview_builder,
-            Position::Logical(LogicalPosition::new(x, y)),
-            Size::Logical(LogicalSize::new(width, height)),
-        )
-        .map_err(|e| e.to_string())?;
-
-    child
-        .set_auto_resize(false)
-        .map_err(|e| e.to_string())?;
+    attach_embed(&window, webview_builder, x, y, width, height)?;
 
     if let Ok(mut guard) = app.state::<JellyfinEmbedState>().open.lock() {
         *guard = true;
@@ -790,12 +820,17 @@ pub async fn jellyfin_embed_resize<R: Runtime>(
         .get_webview(JELLYFIN_LABEL)
         .ok_or("Jellyfin embed not open")?;
 
-    child
-        .set_position(Position::Logical(LogicalPosition::new(x, y)))
-        .map_err(|e| e.to_string())?;
-    child
-        .set_size(Size::Logical(LogicalSize::new(width, height)))
-        .map_err(|e| e.to_string())?;
+    #[cfg(desktop)]
+    {
+        child
+            .set_position(Position::Logical(LogicalPosition::new(x, y)))
+            .map_err(|e| e.to_string())?;
+        child
+            .set_size(Size::Logical(LogicalSize::new(width, height)))
+            .map_err(|e| e.to_string())?;
+    }
+    #[cfg(mobile)]
+    let _ = (child, x, y, width, height);
     Ok(())
 }
 
@@ -816,6 +851,7 @@ pub async fn jellyfin_embed_set_visible<R: Runtime>(
     app: AppHandle<R>,
     visible: bool,
 ) -> Result<(), String> {
+    #[cfg(desktop)]
     if let Some(child) = app.get_webview(JELLYFIN_LABEL) {
         if visible {
             child.show().map_err(|e| e.to_string())?;
@@ -826,6 +862,8 @@ pub async fn jellyfin_embed_set_visible<R: Runtime>(
             }
         }
     }
+    #[cfg(mobile)]
+    let _ = (app, visible);
     Ok(())
 }
 
@@ -852,6 +890,7 @@ pub async fn jellyfin_confirm_playback<R: Runtime>(
         .lock()
         .unwrap_or_else(|e| e.into_inner()) = Some(Instant::now());
     log_jellyfin_bridge(&app, "INFO", &format!("Playback confirmed for URL: {}", url));
+    #[cfg(desktop)]
     if let Some(main_win) = app.get_window("main") {
         let _ = main_win.set_focus();
     }
@@ -979,6 +1018,7 @@ pub async fn jellyfin_embed_focus_signal<R: Runtime>(
     let main_win = app.get_window("main").ok_or("Main window not found")?;
     match kind.as_str() {
         "blur" => {
+            #[cfg(desktop)]
             let _ = main_win.set_focus();
             let _ = main_win.emit("jellyfin:nav-blur", direction.unwrap_or_default());
         }

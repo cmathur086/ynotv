@@ -29,14 +29,16 @@ export function WhatsNewModal({ isOpen, onClose, version }: WhatsNewModalProps) 
 
   return (
     <div className="whats-new-overlay" onClick={onClose}>
-      <div className="whats-new-panel" onClick={(e) => e.stopPropagation()}>
+      {/* role="dialog" + data-action="close" let remote/controller spatial
+          navigation trap focus here and close it with Back. */}
+      <div className="whats-new-panel" role="dialog" onClick={(e) => e.stopPropagation()}>
         <div className="whats-new-header">
           <div className="whats-new-title-area">
             <span className="whats-new-sparkle" role="img" aria-label={t('sparkles')}>✨</span>
             <h2>{t('whatsNew')}</h2>
           </div>
           {version && <span className="whats-new-badge">v{version}</span>}
-          <button className="whats-new-close" onClick={onClose} aria-label={t('close')}>
+          <button className="whats-new-close" data-action="close" onClick={onClose} aria-label={t('close')}>
             ✕
           </button>
         </div>

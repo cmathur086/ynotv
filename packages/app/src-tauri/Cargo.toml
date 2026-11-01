@@ -31,7 +31,6 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
-tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio"] }
 
@@ -80,9 +79,6 @@ url = "2"
 # FFT dependency for per-process audio visualizer
 rustfft = "6.2"
 
-# MPV bindings
-libmpv2 = "4"
-libmpv2-sys = "4"
 libc = "0.2"
 
 # Gamepad & Controller support
@@ -94,18 +90,28 @@ libc = "0.2"
 # (real Xbox controllers, and DualSense pads emulated as Xbox 360).
 gilrs = { version = "0.10", default-features = false, features = ["xinput"] }
 
+# Embedded Web & Remote WebSocket server
+axum = { version = "0.7", features = ["ws"] }
+
+# Random pairing token for the Phone Remote
+uuid = { version = "1", features = ["v4"] }
+
+# Desktop-only native libraries. Android plays video through ExoPlayer (see
+# mpv_core_android.rs) and takes input from the TV remote, so libmpv and the
+# raw HID gamepad backend are not linked there.
+[target.'cfg(not(target_os = "android"))'.dependencies]
+tauri-plugin-updater = "2"
+
+# MPV bindings
+libmpv2 = "4"
+libmpv2-sys = "4"
+
 # DirectInput/HID gamepads (raw DualSense / DualShock over Bluetooth or USB)
 # are invisible to XInput, and Chromium's Gamepad API won't deliver their
 # input while the window is unfocused — so read them directly via HID.
 # default-features = false avoids the libusb feature (needs pkg-config); the
 # platform HID backend (Win32 HID API here) is always compiled in.
 hidapi = { version = "2", default-features = false }
-
-# Embedded Web & Remote WebSocket server
-axum = { version = "0.7", features = ["ws"] }
-
-# Random pairing token for the Phone Remote
-uuid = { version = "1", features = ["v4"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"

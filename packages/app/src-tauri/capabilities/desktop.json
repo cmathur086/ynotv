@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "desktop",
+  "description": "Desktop-only plugins (the updater is not built for Android)",
+  "platforms": ["windows", "macOS", "linux"],
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "updater:default"
+  ]
+}

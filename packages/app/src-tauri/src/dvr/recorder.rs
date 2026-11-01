@@ -1055,7 +1055,7 @@ pub fn find_ffmpeg(app_handle: &tauri::AppHandle) -> Result<PathBuf> {
             let platform_ffmpeg = dir.join("ffmpeg-x86_64-pc-windows-msvc.exe");
             #[cfg(target_os = "macos")]
             let platform_ffmpeg = dir.join("ffmpeg-x86_64-apple-darwin");
-            #[cfg(target_os = "linux")]
+            #[cfg(any(target_os = "linux", target_os = "android"))]
             let platform_ffmpeg = dir.join("ffmpeg-x86_64-unknown-linux-gnu");
 
             if platform_ffmpeg.exists() {
@@ -1073,7 +1073,7 @@ pub fn find_ffmpeg(app_handle: &tauri::AppHandle) -> Result<PathBuf> {
         #[cfg(target_os = "macos")]
         let bundled = resource_dir.join("bin").join("ffmpeg-x86_64-apple-darwin");
 
-        #[cfg(target_os = "linux")]
+        #[cfg(any(target_os = "linux", target_os = "android"))]
         let bundled = resource_dir.join("bin").join("ffmpeg-x86_64-unknown-linux-gnu");
 
         if bundled.exists() {

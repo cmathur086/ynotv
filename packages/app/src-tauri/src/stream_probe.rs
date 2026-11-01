@@ -176,7 +176,7 @@ pub fn find_ffmpeg() -> Option<PathBuf> {
             let names = ["ffmpeg.exe", "ffmpeg-x86_64-pc-windows-msvc.exe"];
             #[cfg(target_os = "macos")]
             let names = ["ffmpeg", "ffmpeg-x86_64-apple-darwin", "ffmpeg-aarch64-apple-darwin"];
-            #[cfg(target_os = "linux")]
+            #[cfg(any(target_os = "linux", target_os = "android"))]
             let names = ["ffmpeg", "ffmpeg-x86_64-unknown-linux-gnu", "ffmpeg-aarch64-unknown-linux-gnu"];
 
             for name in &names {

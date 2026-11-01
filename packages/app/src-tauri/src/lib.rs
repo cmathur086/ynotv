@@ -241,7 +241,10 @@ mod resize_coalescing {
 #[cfg(target_os = "macos")]
 use tauri::TitleBarStyle;
 
-// Platform-specific MPV modules
+// Platform-specific MPV modules. Android has no libmpv: the same module API is
+// implemented on top of an ExoPlayer plugin, and the libmpv multiview canvas is
+// stubbed out.
+#[cfg_attr(target_os = "android", path = "mpv_core_android.rs")]
 mod mpv_core;
 mod mpv_error_parse;
 #[cfg(target_os = "macos")]
@@ -250,7 +253,9 @@ mod mpv_render_mac;
 mod mpv_macos;
 #[cfg(target_os = "windows")]
 mod mpv_windows;
-mod mpv_canvas;mod mpv_popout;
+#[cfg_attr(target_os = "android", path = "mpv_canvas_android.rs")]
+mod mpv_canvas;
+mod mpv_popout;
 mod audio_capture;
 
 // Re-export the MPV state and functions based on platform
@@ -269,12 +274,14 @@ pub enum PlayerEngine {
 }
 
 pub(crate) async fn get_player_engine<R: Runtime>(app: &AppHandle<R>) -> PlayerEngine {
-    #[cfg(target_os = "macos")]
+    // macOS only has the embedded engine; Android only has the ExoPlayer-backed
+    // core, which stands in for it (there is no mpv binary to spawn).
+    #[cfg(any(target_os = "macos", target_os = "android"))]
     {
         let _ = app;
         PlayerEngine::LibMpv
     }
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(any(target_os = "macos", target_os = "android")))]
     {
         if let Some(val) = read_store_setting(app, "playerEngine") {
             if let Some(s) = val.as_str() {
@@ -293,8 +300,11 @@ pub(crate) async fn get_player_engine<R: Runtime>(app: &AppHandle<R>) -> PlayerE
 mod dvr;
 use dvr::{DvrState, models::*};
 
-// System tray + minimize-to-tray support (desktop only)
+// System tray + minimize-to-tray support (desktop only; mobile gets no-op commands)
 #[cfg(desktop)]
+mod tray;
+#[cfg(mobile)]
+#[path = "tray_mobile.rs"]
 mod tray;
 
 // Bulk database operations module
@@ -324,6 +334,7 @@ use cast::{
 mod discord_rp;
 mod local_lib;
 mod gamepad;
+#[cfg_attr(target_os = "android", path = "raw_hid_gamepad_android.rs")]
 mod raw_hid_gamepad;
 mod web_server;
 mod jellyfin_web;
@@ -2170,6 +2181,8 @@ async fn mpv_toggle_fullscreen<R: Runtime>(
             tokio::time::sleep(std::time::Duration::from_millis(50)).await;
         }
 
+        // Android apps are always full-screen; only the video surface resizes.
+        #[cfg(desktop)]
         window.set_fullscreen(!is_fullscreen).map_err(|e| e.to_string())?;
 
         // Windows: exiting fullscreen from a windowed (non-maximized) state.
@@ -5228,6 +5241,7 @@ fn fallback_update_store_file<R: tauri::Runtime>(app: &tauri::AppHandle<R>, widt
 }
 
 #[allow(dead_code)]
+#[cfg(desktop)]
 fn restore_window_state(app: &tauri::AppHandle) {
     if let Some(path) = window_state_path(app) {
         if let Ok(json) = std::fs::read_to_string(&path) {
@@ -5258,7 +5272,12 @@ fn restore_window_state(app: &tauri::AppHandle) {
     }
 }
 
+/// Android windows always fill the screen; there is no saved placement to restore.
+#[cfg(mobile)]
+fn restore_window_position(_app: &tauri::AppHandle) {}
+
 /// Restore only window position (not size) - used when UI controls the startup size
+#[cfg(desktop)]
 fn restore_window_position(app: &tauri::AppHandle) {
     if let Some(path) = window_state_path(app) {
         if let Ok(json) = std::fs::read_to_string(&path) {
@@ -5406,7 +5425,6 @@ fn last_windowed_geometry<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Optio
 // App Entry Point
 // =============================================================================
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
 // ─── External Player State (for reuse / single-instance mode) ────────────────
 
 pub struct ExternalPlayerState {
@@ -5423,6 +5441,7 @@ impl ExternalPlayerState {
 
 // ─── App Entry Point ─────────────────────────────────────────────────────────
 
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[cfg(target_os = "windows")]
     {
@@ -5457,7 +5476,7 @@ pub fn run() {
         }
     }
 
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
@@ -5480,10 +5499,19 @@ pub fn run() {
                 file_name: Some("ynotv".into())
             }))
             .build())
-        .plugin(tauri_plugin_updater::Builder::new().build())
-        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_process::init());
+
+    // Self-update and the sidecar mpv engine are desktop-only; Android ships
+    // through its own package manager and plays through ExoPlayer.
+    #[cfg(desktop)]
+    let builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
+    let builder = builder.manage(MpvState::new());
+    #[cfg(target_os = "android")]
+    let builder = builder.plugin(mpv_core::init());
+
+    builder
         // Manage platform-specific MPV state
-        .manage(MpvState::new())
         .manage(MpvCoreState::new())
         .manage(audio_capture::AudioCaptureState::new())
         .manage(std::sync::Arc::new(cast::CastManager::new()))
@@ -5498,6 +5526,8 @@ pub fn run() {
             // a slow startup shows the boot splash instead of "no window".
             // If started via Windows startup (--startup-tray), keep it hidden
             // in the system tray so it never flashes on screen or steals focus at logon.
+            // (Android activities are shown by the OS.)
+            #[cfg(desktop)]
             if let Some(window) = app.get_window("main") {
                 #[cfg(desktop)]
                 let is_startup_tray = tray::is_startup_tray_launch();

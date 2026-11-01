@@ -25,10 +25,14 @@ import { useSportsSettingsStore } from './stores/sportsSettingsStore';
 // and blob blending while scrolling, restores on idle). Reads the
 // reduceEffectsWhileScrolling setting from the store at event time.
 import './utils/scrollTurbo';
+import { installTvRemote } from './services/tvRemote';
 
 // Must run before any component mounts: a localStorage write that exceeds the
 // WebView2 quota must never crash the (transparent) window.
 installSafeStorage();
+
+// Android TV: route the remote's D-pad / OK / Back through spatial navigation.
+installTvRemote();
 
 // Kick off the single boot-time settings load (the store seeds synchronously
 // from localStorage for first paint; this reconciles the authoritative values

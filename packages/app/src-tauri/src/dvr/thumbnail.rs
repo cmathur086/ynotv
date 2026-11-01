@@ -144,7 +144,7 @@ async fn find_ffmpeg() -> Result<PathBuf> {
             let sidecar_names = ["ffmpeg.exe", "ffmpeg-x86_64-pc-windows-msvc.exe"];
             #[cfg(target_os = "macos")]
             let sidecar_names = ["ffmpeg", "ffmpeg-x86_64-apple-darwin"];
-            #[cfg(target_os = "linux")]
+            #[cfg(any(target_os = "linux", target_os = "android"))]
             let sidecar_names = ["ffmpeg", "ffmpeg-x86_64-unknown-linux-gnu"];
 
             for name in &sidecar_names {
